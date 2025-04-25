@@ -14,13 +14,15 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
-# Make sure to use this redirect URL. It has to match the one in the whitelist
-# We'll get the actual host from the request context when needed
+# For the Google OAuth redirect URI
+# 1. We need to use the correct authorized redirect URI from the API console
+# 2. For a Replit environment, we'll need to ask the user to add the correct URI to the API console
 REPLIT_DEV_DOMAIN = os.environ.get("REPLIT_DEV_DOMAIN", "")
 
 # Print debugging information about the redirect URI
 print(f"REPLIT_DEV_DOMAIN: {REPLIT_DEV_DOMAIN}")
-print(f"Full Redirect URI would be: https://{REPLIT_DEV_DOMAIN}/google_login/callback")
+replit_redirect_uri = f"https://{REPLIT_DEV_DOMAIN}/google_login/callback" if REPLIT_DEV_DOMAIN else None
+print(f"Replit Redirect URI: {replit_redirect_uri}")
 
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 

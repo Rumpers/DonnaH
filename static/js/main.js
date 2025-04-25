@@ -121,3 +121,22 @@ function showAlert(message, type = 'info') {
         }
     }, 5000);
 }
+
+/**
+ * Copy text to clipboard
+ * @param {string} elementId - The ID of the element containing text to copy
+ */
+function copyToClipboard(elementId) {
+    const element = document.getElementById(elementId);
+    if (!element) return;
+    
+    const text = element.textContent;
+    navigator.clipboard.writeText(text).then(
+        function() {
+            showAlert('Redirect URI copied to clipboard!', 'success');
+        },
+        function() {
+            showAlert('Failed to copy redirect URI', 'danger');
+        }
+    );
+}

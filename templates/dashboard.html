@@ -177,7 +177,12 @@
                                                     <a href="{{ url_for('google_auth.disconnect') }}" class="btn btn-outline-danger btn-sm">Disconnect</a>
                                                 </div>
                                             {% else %}
-                                                <a href="{{ url_for('google_auth.login') }}" class="btn btn-primary">Connect</a>
+                                                <div class="d-flex flex-column align-items-end">
+                                                    <a href="{{ url_for('google_auth.login') }}" class="btn btn-primary mb-2">Connect</a>
+                                                    <button type="button" class="btn btn-outline-info btn-sm" data-bs-toggle="modal" data-bs-target="#googleSetupModal">
+                                                        Setup Instructions
+                                                    </button>
+                                                </div>
                                             {% endif %}
                                         </div>
                                     </div>
@@ -330,6 +335,47 @@
                         <li>Enter the command <code>/start</code></li>
                         <li>When prompted, enter this connection code: <code>ABC123</code></li>
                     </ol>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Google Setup Modal -->
+    <div class="modal fade" id="googleSetupModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Google OAuth Setup Instructions</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Important:</strong> The current Google OAuth configuration is not working because the redirect URI in your Google API Console doesn't match the one we need to use.
+                    </div>
+                    
+                    <h6 class="mt-4">Fix the issue by updating your Google OAuth configuration:</h6>
+                    <ol>
+                        <li>Go to <a href="https://console.cloud.google.com/apis/credentials" target="_blank">Google Cloud Console Credentials</a></li>
+                        <li>Select your OAuth 2.0 Client ID</li>
+                        <li>Add the following URL to "Authorized redirect URIs":</li>
+                        <div class="alert alert-info mt-2 mb-2">
+                            <code id="redirect-uri-text">https://{{ replit_domain }}/google_login/callback</code>
+                            <button class="btn btn-sm btn-outline-primary float-end" onclick="copyToClipboard('redirect-uri-text')">
+                                <i class="bi bi-clipboard"></i> Copy
+                            </button>
+                        </div>
+                        <li>Click "Save" to update your Google OAuth configuration</li>
+                        <li>Return to this page and click "Connect" again</li>
+                    </ol>
+                    
+                    <div class="alert alert-info mt-4">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Note:</strong> You may need to wait a few minutes for Google's changes to take effect after updating the redirect URI.
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
