@@ -18,6 +18,10 @@ GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configura
 # We'll get the actual host from the request context when needed
 REPLIT_DEV_DOMAIN = os.environ.get("REPLIT_DEV_DOMAIN", "")
 
+# Print debugging information about the redirect URI
+print(f"REPLIT_DEV_DOMAIN: {REPLIT_DEV_DOMAIN}")
+print(f"Full Redirect URI would be: https://{REPLIT_DEV_DOMAIN}/google_login/callback")
+
 client = WebApplicationClient(GOOGLE_CLIENT_ID)
 
 google_auth = Blueprint("google_auth", __name__)
@@ -35,11 +39,14 @@ def login():
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
     # Create the OAuth request URL with proper scopes
+    # We need to use http://localhost as the redirect URI because that's what's configured
+    # in the Google API Console
+    redirect_uri = "http://localhost"
+    print(f"Using redirect URI: {redirect_uri}")
+    
     request_uri = client.prepare_request_uri(
         authorization_endpoint,
-        # Replacing http:// with https:// is important as the external protocol 
-        # must be https to match the URI whitelisted
-        redirect_uri=request.base_url.replace("http://", "https://") + "/callback",
+        redirect_uri=redirect_uri,
         scope=[
             "openid", 
             "email", 
@@ -71,12 +78,14 @@ def callback():
     token_endpoint = google_provider_cfg["token_endpoint"]
 
     # Prepare the token exchange request
+    # Use the same redirect URI as in the authorization request
+    redirect_uri = "http://localhost"
+    print(f"Token exchange using redirect URI: {redirect_uri}")
+    
     token_url, headers, body = client.prepare_token_request(
         token_endpoint,
-        # Replacing http:// with https:// is important as the external protocol
-        # must be https to match the URI whitelisted
-        authorization_response=request.url.replace("http://", "https://"),
-        redirect_url=request.base_url.replace("http://", "https://"),
+        authorization_response=request.url,
+        redirect_url=redirect_uri,
         code=code,
     )
     
