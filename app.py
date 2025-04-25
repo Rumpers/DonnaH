@@ -136,7 +136,20 @@ def logout():
 @login_required
 def dashboard():
     from models import MemoryEntry, Document
-    return render_template('dashboard.html', MemoryEntry=MemoryEntry, Document=Document)
+    
+    # Get memory and document counts
+    memory_count = MemoryEntry.query.filter_by(user_id=current_user.id).count()
+    document_count = Document.query.filter_by(user_id=current_user.id).count()
+    
+    # Get the Replit domain for Google OAuth redirect URI
+    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    
+    return render_template(
+        'dashboard.html', 
+        memory_count=memory_count, 
+        document_count=document_count,
+        replit_domain=replit_domain
+    )
 
 @app.route('/start_bot', methods=['POST'])
 @login_required

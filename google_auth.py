@@ -41,9 +41,14 @@ def login():
     authorization_endpoint = google_provider_cfg["authorization_endpoint"]
 
     # Create the OAuth request URL with proper scopes
-    # We need to use http://localhost as the redirect URI because that's what's configured
-    # in the Google API Console
-    redirect_uri = "http://localhost"
+    # Check if we have a Replit domain to use as redirect URI
+    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    if replit_domain:
+        redirect_uri = f"https://{replit_domain}/google_login/callback"
+    else:
+        # Fallback to localhost if not running on Replit
+        redirect_uri = "http://localhost"
+    
     print(f"Using redirect URI: {redirect_uri}")
     
     request_uri = client.prepare_request_uri(
@@ -80,8 +85,14 @@ def callback():
     token_endpoint = google_provider_cfg["token_endpoint"]
 
     # Prepare the token exchange request
-    # Use the same redirect URI as in the authorization request
-    redirect_uri = "http://localhost"
+    # Must use the same redirect URI as in the authorization request
+    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    if replit_domain:
+        redirect_uri = f"https://{replit_domain}/google_login/callback"
+    else:
+        # Fallback to localhost if not running on Replit
+        redirect_uri = "http://localhost"
+        
     print(f"Token exchange using redirect URI: {redirect_uri}")
     
     token_url, headers, body = client.prepare_token_request(
