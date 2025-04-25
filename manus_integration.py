@@ -1,13 +1,21 @@
 import os
 import logging
 import json
+import asyncio
+import sys
 from datetime import datetime
 import re
 import random
 
+# Add OpenManus to the Python path
+sys.path.append('./OpenManus')
+
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
+
+# Track if we're using the real OpenManus or the mock version
+using_real_openmanus = False
 
 # OpenManus implementation for local development
 # This is a mock implementation that simulates the behavior of the OpenManus API
@@ -276,38 +284,378 @@ class OpenManus:
         
         return category
 
-# Create a singleton instance
-_openmanus = OpenManus()
+# Real OpenManus agent using OpenAI API directly
+class RealOpenManus:
+    def __init__(self):
+        self.api_key = None
+        self.initialized = False
+        self.system_prompt = """
+        You are an advanced assistant named OpenManus. You specialize in helping users manage their emails, 
+        calendar events, documents, and personal information. Your responses should be helpful, 
+        informative, and accurate. When asked to format responses as JSON, always do so correctly.
+        """
+    
+    def initialize(self):
+        """Initialize the OpenAI-based implementation."""
+        try:
+            # Check for OpenAI API key
+            self.api_key = os.environ.get("OPENAI_API_KEY")
+            if not self.api_key:
+                logger.warning("OpenAI API key not found. Integration will have limited functionality.")
+                return False
+            
+            # Try to import OpenAI package
+            try:
+                import openai
+                openai.api_key = self.api_key
+                self.client = openai.OpenAI(api_key=self.api_key)
+                logger.info("Successfully initialized OpenAI client")
+                self.initialized = True
+                return True
+            except ImportError:
+                logger.error("Failed to import OpenAI package")
+                return False
+        except Exception as e:
+            logger.error(f"Error initializing OpenAI integration: {e}")
+            return False
+    
+    async def _async_run(self, prompt, system_prompt=None):
+        """Run the OpenAI API with a prompt asynchronously."""
+        if not self.initialized:
+            return {"response": "OpenAI integration is not initialized properly.", "error": True}
+        
+        try:
+            import openai
+            
+            # Set up the messages for the chat completion
+            messages = [
+                {"role": "system", "content": system_prompt or self.system_prompt},
+                {"role": "user", "content": prompt}
+            ]
+            
+            # Call the OpenAI API
+            response = await asyncio.to_thread(
+                self.client.chat.completions.create,
+                model="gpt-4-turbo",
+                messages=messages,
+                temperature=0.7,
+                max_tokens=1000
+            )
+            
+            # Extract the response content
+            if response.choices and len(response.choices) > 0:
+                return {"response": response.choices[0].message.content, "error": False}
+            
+            return {"response": "No response generated.", "error": True}
+        except Exception as e:
+            logger.error(f"Error calling OpenAI API: {e}")
+            return {"response": f"Error: {str(e)}", "error": True}
+    
+    def process_message(self, user, message, current_state):
+        """Process a message using natural language understanding."""
+        try:
+            # Format context information for the prompt
+            context = ""
+            if current_state:
+                context = f"Context: {json.dumps(current_state)}\n\n"
+            
+            # Create the prompt with user and context information
+            prompt = f"{context}User {user.username}: {message}"
+            
+            # Run the agent in the event loop
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(self._async_run(prompt))
+            
+            if result["error"]:
+                return result["response"]
+            
+            # Format the response as expected by the caller
+            response = {
+                "message": result["response"],
+                "intents": [],  # We don't have explicit intents from OpenManus
+                "entities": {},  # We don't have explicit entities from OpenManus
+                "action": {"action": "none", "parameters": {}},
+                "confidence": 0.9
+            }
+            
+            return response
+        except Exception as e:
+            logger.error(f"Error processing message with real OpenManus: {e}")
+            return "I encountered an error processing your request."
+    
+    def generate_document_summary(self, document_text):
+        """Generate a summary of a document."""
+        try:
+            # Create a prompt for document summarization
+            prompt = f"Please summarize the following document:\n\n{document_text[:3000]}..."
+            
+            # Run the agent in the event loop
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(self._async_run(prompt))
+            
+            if result["error"]:
+                return "Failed to generate document summary."
+            
+            return result["response"]
+        except Exception as e:
+            logger.error(f"Error generating document summary with real OpenManus: {e}")
+            return "Failed to generate document summary."
+    
+    def extract_memories(self, user, conversation_text):
+        """Extract potential memory entries from conversation text."""
+        try:
+            # Create a prompt for memory extraction
+            prompt = (
+                f"Extract key information from this conversation that should be remembered as memory entries. "
+                f"Format your response as a JSON array with objects containing 'type', 'title', and 'content' fields. "
+                f"Valid types are: project, person, event, document, idea, task.\n\n"
+                f"Conversation:\n{conversation_text}"
+            )
+            
+            # Run the agent in the event loop
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(self._async_run(prompt))
+            
+            if result["error"]:
+                return []
+            
+            # Try to extract JSON from the response
+            try:
+                response = result["response"]
+                start_idx = response.find('[')
+                end_idx = response.rfind(']') + 1
+                
+                if start_idx >= 0 and end_idx > start_idx:
+                    json_str = response[start_idx:end_idx]
+                    memories = json.loads(json_str)
+                    return memories
+                return []
+            except json.JSONDecodeError:
+                logger.error("Failed to parse JSON response for memory extraction")
+                return []
+        except Exception as e:
+            logger.error(f"Error extracting memories with real OpenManus: {e}")
+            return []
+    
+    def analyze_email(self, email_content):
+        """Analyze email content to extract important information."""
+        try:
+            # Create a prompt for email analysis
+            prompt = (
+                f"Analyze this email and extract important information. "
+                f"Format your response as a JSON object with 'importance', 'category', 'action_required', "
+                f"'dates', and 'entities' fields.\n\n"
+                f"Email:\n{email_content}"
+            )
+            
+            # Run the agent in the event loop
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(self._async_run(prompt))
+            
+            if result["error"]:
+                return {"importance": "medium", "category": "general", "action_required": False}
+            
+            # Try to extract JSON from the response
+            try:
+                response = result["response"]
+                start_idx = response.find('{')
+                end_idx = response.rfind('}') + 1
+                
+                if start_idx >= 0 and end_idx > start_idx:
+                    json_str = response[start_idx:end_idx]
+                    analysis = json.loads(json_str)
+                    return analysis
+                return {"importance": "medium", "category": "general", "action_required": False}
+            except json.JSONDecodeError:
+                logger.error("Failed to parse JSON response for email analysis")
+                return {"importance": "medium", "category": "general", "action_required": False}
+        except Exception as e:
+            logger.error(f"Error analyzing email with real OpenManus: {e}")
+            return {"importance": "medium", "category": "general", "action_required": False}
+    
+    def analyze_calendar_event(self, event_details):
+        """Analyze calendar event to extract important information."""
+        try:
+            # Format the event details as a JSON string
+            event_json = json.dumps(event_details, indent=2)
+            
+            # Create a prompt for calendar event analysis
+            prompt = (
+                f"Analyze this calendar event and extract important information. "
+                f"Format your response as a JSON object with 'importance', 'category', 'preparation_required', "
+                f"and 'participants' fields.\n\n"
+                f"Event:\n{event_json}"
+            )
+            
+            # Run the agent in the event loop
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(self._async_run(prompt))
+            
+            if result["error"]:
+                return {"importance": "medium", "category": "meeting", "preparation_required": False}
+            
+            # Try to extract JSON from the response
+            try:
+                response = result["response"]
+                start_idx = response.find('{')
+                end_idx = response.rfind('}') + 1
+                
+                if start_idx >= 0 and end_idx > start_idx:
+                    json_str = response[start_idx:end_idx]
+                    analysis = json.loads(json_str)
+                    return analysis
+                return {"importance": "medium", "category": "meeting", "preparation_required": False}
+            except json.JSONDecodeError:
+                logger.error("Failed to parse JSON response for calendar event analysis")
+                return {"importance": "medium", "category": "meeting", "preparation_required": False}
+        except Exception as e:
+            logger.error(f"Error analyzing calendar event with real OpenManus: {e}")
+            return {"importance": "medium", "category": "meeting", "preparation_required": False}
+    
+    def generate_email_response(self, email_content, response_type="draft"):
+        """Generate an email response."""
+        try:
+            # Create a prompt for email response generation
+            prompt = (
+                f"Generate a {response_type} email response to the following email content. "
+                f"The response should be formatted as a proper email with greeting and closing.\n\n"
+                f"Email content:\n{email_content}"
+            )
+            
+            # Run the agent in the event loop
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(self._async_run(prompt))
+            
+            if result["error"]:
+                return "Failed to generate email response."
+            
+            return result["response"]
+        except Exception as e:
+            logger.error(f"Error generating email response with real OpenManus: {e}")
+            return "Failed to generate email response."
+    
+    def categorize_document_content(self, document_text):
+        """Categorize document content based on its text."""
+        try:
+            # Create a prompt for document categorization
+            prompt = (
+                f"Categorize this document content. Format your response as a JSON object with "
+                f"'category' and 'confidence' fields.\n\n"
+                f"Document excerpt:\n{document_text[:1000]}..."
+            )
+            
+            # Run the agent in the event loop
+            loop = asyncio.get_event_loop()
+            result = loop.run_until_complete(self._async_run(prompt))
+            
+            if result["error"]:
+                return "Unknown"
+            
+            # Try to extract JSON from the response
+            try:
+                response = result["response"]
+                start_idx = response.find('{')
+                end_idx = response.rfind('}') + 1
+                
+                if start_idx >= 0 and end_idx > start_idx:
+                    json_str = response[start_idx:end_idx]
+                    categorization = json.loads(json_str)
+                    return categorization.get("category", "Unknown")
+                return "Unknown"
+            except json.JSONDecodeError:
+                logger.error("Failed to parse JSON response for document categorization")
+                return "Unknown"
+        except Exception as e:
+            logger.error(f"Error categorizing document with real OpenManus: {e}")
+            return "Unknown"
 
-# Module functions that use the singleton
+# Create singleton instances for both implementations
+_mock_openmanus = OpenManus()
+_real_openmanus = RealOpenManus()
+_current_openmanus = None
+
+# Module functions that use the appropriate implementation
 def initialize_manus():
     """Initialize the OpenManus framework."""
-    return _openmanus.initialize()
+    global _current_openmanus, using_real_openmanus
+    
+    # First try to initialize the real OpenManus
+    try:
+        if _real_openmanus.initialize():
+            _current_openmanus = _real_openmanus
+            using_real_openmanus = True
+            logger.info("Successfully initialized real OpenManus")
+            return True
+    except Exception as e:
+        logger.error(f"Error initializing real OpenManus: {e}")
+    
+    # Fall back to the mock implementation
+    logger.warning("Falling back to mock OpenManus implementation")
+    _mock_openmanus.initialize()
+    _current_openmanus = _mock_openmanus
+    using_real_openmanus = False
+    
+    return True
 
 def process_message(user, message, current_state):
     """Process a message using the OpenManus framework."""
-    return _openmanus.process_message(user, message, current_state)
+    global _current_openmanus
+    
+    if _current_openmanus is None:
+        initialize_manus()
+    
+    return _current_openmanus.process_message(user, message, current_state)
 
 def generate_document_summary(document_text):
     """Generate a summary of a document using OpenManus."""
-    return _openmanus.generate_document_summary(document_text)
+    global _current_openmanus
+    
+    if _current_openmanus is None:
+        initialize_manus()
+    
+    return _current_openmanus.generate_document_summary(document_text)
 
 def extract_memories(user, conversation_text):
     """Extract potential memory entries from conversation text."""
-    return _openmanus.extract_memories(user, conversation_text)
+    global _current_openmanus
+    
+    if _current_openmanus is None:
+        initialize_manus()
+    
+    return _current_openmanus.extract_memories(user, conversation_text)
 
 def analyze_email(email_content):
     """Analyze email content to extract important information."""
-    return _openmanus.analyze_email(email_content)
+    global _current_openmanus
+    
+    if _current_openmanus is None:
+        initialize_manus()
+    
+    return _current_openmanus.analyze_email(email_content)
 
 def analyze_calendar_event(event_details):
     """Analyze calendar event to extract important information."""
-    return _openmanus.analyze_calendar_event(event_details)
+    global _current_openmanus
+    
+    if _current_openmanus is None:
+        initialize_manus()
+    
+    return _current_openmanus.analyze_calendar_event(event_details)
 
 def generate_email_response(email_content, response_type="draft"):
     """Generate an email response based on the content of a received email."""
-    return _openmanus.generate_email_response(email_content, response_type)
+    global _current_openmanus
+    
+    if _current_openmanus is None:
+        initialize_manus()
+    
+    return _current_openmanus.generate_email_response(email_content, response_type)
 
 def categorize_document_content(document_text):
     """Categorize document content based on its text."""
-    return _openmanus.categorize_document_content(document_text)
+    global _current_openmanus
+    
+    if _current_openmanus is None:
+        initialize_manus()
+    
+    return _current_openmanus.categorize_document_content(document_text)
