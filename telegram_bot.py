@@ -1,5 +1,7 @@
 import os
 import logging
+import threading
+import asyncio
 from datetime import datetime
 import google_services
 import memory_system
@@ -323,9 +325,17 @@ async def cancel(update: Update, context: CallbackContext) -> int:
     
     return ConversationHandler.END
 
+# Global variable to track the bot thread
+bot_thread = None
+
 def initialize_bot(token):
     """Initialize the Telegram bot with the given token."""
-    global bot_application
+    global bot_application, bot_thread
+    
+    # If bot is already running, don't start again
+    if bot_thread and bot_thread.is_alive():
+        logger.info("Telegram bot is already running")
+        return True
     
     try:
         # Create the Application
@@ -365,10 +375,18 @@ def initialize_bot(token):
         
         bot_application.add_handler(conv_handler)
         
-        # Start the Bot
-        bot_application.run_polling()
+        # Start the Bot in a separate thread
+        def run_bot():
+            try:
+                asyncio.set_event_loop(asyncio.new_event_loop())
+                bot_application.run_polling(allowed_updates=Update.ALL_TYPES)
+            except Exception as e:
+                logger.error(f"Error running Telegram bot: {e}")
         
-        logger.info("Telegram bot initialized successfully")
+        bot_thread = threading.Thread(target=run_bot, daemon=True)
+        bot_thread.start()
+        
+        logger.info("Telegram bot initialized successfully in background thread")
         return True
     except Exception as e:
         logger.error(f"Error initializing Telegram bot: {e}")

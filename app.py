@@ -177,6 +177,15 @@ with app.app_context():
         # Initialize memory system
         initialize_memory_system()
         
+        # Check if Telegram token is available and start the bot automatically
+        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+        if telegram_token:
+            try:
+                telegram_bot.initialize_bot(telegram_token)
+                logger.info("Telegram bot started automatically on application startup")
+            except Exception as e:
+                logger.error(f"Error starting Telegram bot: {e}")
+        
         logger.info("All services initialized successfully")
     except Exception as e:
         logger.error(f"Error initializing services: {e}")
