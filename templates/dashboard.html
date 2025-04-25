@@ -113,7 +113,7 @@
                                             <div class="card-body d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <h6 class="card-subtitle mb-1">Memory Entries</h6>
-                                                    <h3 class="card-title mb-0">{{ current_user.memory_entries.count() }}</h3>
+                                                    <h3 class="card-title mb-0">{{ memory_count }}</h3>
                                                 </div>
                                                 <i class="bi bi-brain fs-1"></i>
                                             </div>
@@ -124,7 +124,7 @@
                                             <div class="card-body d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <h6 class="card-subtitle mb-1">Documents</h6>
-                                                    <h3 class="card-title mb-0">{{ Document.query.filter_by(user_id=current_user.id).count() }}</h3>
+                                                    <h3 class="card-title mb-0">{{ document_count }}</h3>
                                                 </div>
                                                 <i class="bi bi-file-earmark-text fs-1"></i>
                                             </div>
