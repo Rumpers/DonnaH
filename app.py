@@ -20,8 +20,15 @@ db = SQLAlchemy(model_class=Base)
 
 # Create Flask application
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET")
+app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
+
+# Initialize LoginManager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth'
+login_manager.login_message = "Please log in to access this page."
+login_manager.login_message_category = "warning"
 
 # Configure database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///manus_assistant.db")
@@ -40,27 +47,95 @@ from google_services import initialize_google_services
 from manus_integration import initialize_manus
 from memory_system import initialize_memory_system
 
+# User loader for Flask-Login
+@login_manager.user_loader
+def load_user(user_id):
+    from models import User
+    return User.query.get(int(user_id))
+
 # Routes
 @app.route('/')
 def index():
     return render_template('index.html')
 
-@app.route('/auth')
+@app.route('/auth', methods=['GET'])
 def auth():
     return render_template('auth.html')
 
-@app.route('/dashboard')
-def dashboard():
-    if 'user_id' not in session:
-        flash('Please log in first', 'warning')
+@app.route('/login', methods=['POST'])
+def login():
+    from models import User
+    
+    email = request.form.get('email')
+    password = request.form.get('password')
+    
+    user = User.query.filter_by(email=email).first()
+    
+    if user and check_password_hash(user.password_hash, password):
+        login_user(user)
+        session['user_id'] = user.id
+        flash('Login successful!', 'success')
+        return redirect(url_for('dashboard'))
+    else:
+        flash('Invalid email or password. Please try again.', 'danger')
         return redirect(url_for('auth'))
+
+@app.route('/register', methods=['POST'])
+def register():
+    from models import User
+    
+    username = request.form.get('username')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    confirm_password = request.form.get('confirm_password')
+    
+    # Validate form data
+    if not all([username, email, password, confirm_password]):
+        flash('All fields are required.', 'danger')
+        return redirect(url_for('auth'))
+    
+    if password != confirm_password:
+        flash('Passwords do not match.', 'danger')
+        return redirect(url_for('auth'))
+    
+    # Check if user already exists
+    existing_user = User.query.filter_by(email=email).first()
+    if existing_user:
+        flash('Email already registered. Please login instead.', 'warning')
+        return redirect(url_for('auth'))
+    
+    # Create new user
+    new_user = User(
+        username=username, 
+        email=email, 
+        password_hash=generate_password_hash(password)
+    )
+    
+    db.session.add(new_user)
+    db.session.commit()
+    
+    # Log the user in
+    login_user(new_user)
+    session['user_id'] = new_user.id
+    flash('Registration successful! Welcome to OpenManus Assistant.', 'success')
+    return redirect(url_for('dashboard'))
+
+@app.route('/logout')
+def logout():
+    logout_user()
+    if 'user_id' in session:
+        session.pop('user_id')
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('index'))
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
     return render_template('dashboard.html')
 
 @app.route('/start_bot', methods=['POST'])
+@login_required
 def start_bot():
-    if 'user_id' not in session:
-        flash('Please log in first', 'warning')
-        return redirect(url_for('auth'))
     
     try:
         telegram_token = os.environ.get("TELEGRAM_TOKEN")

@@ -4,38 +4,41 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dashboard - OpenManus Executive Assistant</title>
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/feather-icons/4.29.0/feather.min.js"></script>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
 </head>
 <body>
+    <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="{{ url_for('index') }}">
-                <i data-feather="briefcase"></i> 
-                OpenManus Assistant
+            <a class="navbar-brand" href="/">
+                <span class="fs-4">OpenManus</span> Executive Assistant
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('index') }}">Home</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('auth') }}">Login/Register</a>
+                        <a class="nav-link" href="/">Home</a>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link active" href="{{ url_for('dashboard') }}">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
                     </li>
                 </ul>
             </div>
         </div>
     </nav>
 
-    <div class="container-fluid py-4">
-        <!-- Flash messages -->
+    <!-- Flash Messages -->
+    <div class="container mt-3">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 {% for category, message in messages %}
@@ -46,308 +49,270 @@
                 {% endfor %}
             {% endif %}
         {% endwith %}
+    </div>
 
+    <!-- Dashboard Content -->
+    <div class="container py-4">
         <div class="row">
             <!-- Sidebar -->
-            <div class="col-md-3">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i data-feather="user" class="me-2"></i> User Profile
-                        </h5>
-                    </div>
+            <div class="col-lg-3">
+                <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body">
                         <div class="text-center mb-3">
-                            <div class="avatar-placeholder">
-                                <i data-feather="user" style="width: 48px; height: 48px;"></i>
+                            <div class="avatar-placeholder bg-primary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 80px; height: 80px;">
+                                <span class="text-white fs-1">{{ current_user.username[0] | upper }}</span>
                             </div>
-                            <h5 class="mt-3">Username</h5>
-                            <p class="text-muted">user@example.com</p>
+                            <h5 class="card-title">Welcome, {{ current_user.username }}</h5>
+                            <p class="card-subtitle text-muted">{{ current_user.email }}</p>
                         </div>
+                        
                         <hr>
-                        <div class="d-grid gap-2">
-                            <button class="btn btn-outline-primary">
-                                <i data-feather="edit" class="me-2"></i> Edit Profile
-                            </button>
-                            <button class="btn btn-outline-danger">
-                                <i data-feather="log-out" class="me-2"></i> Logout
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i data-feather="link" class="me-2"></i> Connected Services
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <ul class="list-group list-group-flush">
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i data-feather="mail" class="me-2 text-primary"></i> Gmail
-                                </div>
-                                <span class="badge bg-success rounded-pill">Connected</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i data-feather="calendar" class="me-2 text-primary"></i> Google Calendar
-                                </div>
-                                <span class="badge bg-success rounded-pill">Connected</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i data-feather="file" class="me-2 text-primary"></i> Google Drive
-                                </div>
-                                <span class="badge bg-success rounded-pill">Connected</span>
-                            </li>
-                            <li class="list-group-item d-flex justify-content-between align-items-center">
-                                <div>
-                                    <i data-feather="message-circle" class="me-2 text-primary"></i> Telegram
-                                </div>
-                                <span class="badge bg-danger rounded-pill">Not Connected</span>
-                            </li>
-                        </ul>
-                        <div class="d-grid gap-2 mt-3">
-                            <button class="btn btn-outline-primary btn-sm">
-                                <i data-feather="refresh-cw" class="me-2"></i> Refresh Connections
-                            </button>
+                        
+                        <div class="list-group list-group-flush">
+                            <a href="#overview" class="list-group-item list-group-item-action active" data-bs-toggle="list">
+                                <i class="bi bi-speedometer2 me-2"></i> Overview
+                            </a>
+                            <a href="#services" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                                <i class="bi bi-gear me-2"></i> Connected Services
+                            </a>
+                            <a href="#bot" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                                <i class="bi bi-robot me-2"></i> Telegram Bot
+                            </a>
+                            <a href="#memories" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                                <i class="bi bi-journal-text me-2"></i> Memory Entries
+                            </a>
+                            <a href="#documents" class="list-group-item list-group-item-action" data-bs-toggle="list">
+                                <i class="bi bi-file-earmark-text me-2"></i> Documents
+                            </a>
                         </div>
                     </div>
                 </div>
             </div>
-
+            
             <!-- Main Content -->
-            <div class="col-md-9">
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i data-feather="activity" class="me-2"></i> Assistant Status
-                        </h5>
+            <div class="col-lg-9">
+                <div class="tab-content">
+                    <!-- Overview Tab -->
+                    <div class="tab-pane fade show active" id="overview">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Dashboard Overview</h4>
+                                <p class="card-text">
+                                    Welcome to your OpenManus Executive Assistant dashboard. Here you can manage your connected services, 
+                                    view your assistant's memory entries, and access processed documents.
+                                </p>
+                                
+                                <div class="row g-4 mt-3">
+                                    <div class="col-md-4">
+                                        <div class="card bg-primary text-white">
+                                            <div class="card-body d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="card-subtitle mb-1">Memory Entries</h6>
+                                                    <h3 class="card-title mb-0">0</h3>
+                                                </div>
+                                                <i class="bi bi-brain fs-1"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-info text-white">
+                                            <div class="card-body d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="card-subtitle mb-1">Documents</h6>
+                                                    <h3 class="card-title mb-0">0</h3>
+                                                </div>
+                                                <i class="bi bi-file-earmark-text fs-1"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="card bg-success text-white">
+                                            <div class="card-body d-flex justify-content-between align-items-center">
+                                                <div>
+                                                    <h6 class="card-subtitle mb-1">Connected Services</h6>
+                                                    <h3 class="card-title mb-0">0/3</h3>
+                                                </div>
+                                                <i class="bi bi-plug fs-1"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <div class="row align-items-center">
-                            <div class="col-md-6">
-                                <h4>Your Executive Assistant</h4>
-                                <p>Control and monitor your AI assistant powered by OpenManus.</p>
-                                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
-                                    <form action="{{ url_for('start_bot') }}" method="post">
-                                        <button type="submit" class="btn btn-primary">
-                                            <i data-feather="play" class="me-2"></i> Start Assistant
-                                        </button>
-                                    </form>
-                                    <button class="btn btn-outline-secondary">
-                                        <i data-feather="settings" class="me-2"></i> Configure
+                    
+                    <!-- Connected Services Tab -->
+                    <div class="tab-pane fade" id="services">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Connected Services</h4>
+                                <p class="card-text">
+                                    Connect your Google services to enhance your assistant's capabilities.
+                                </p>
+                                
+                                <div class="list-group mt-4">
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h5 class="mb-1"><i class="bi bi-google me-2"></i> Google Account</h5>
+                                                <p class="mb-1 text-muted">Connect to Gmail, Calendar, and Drive</p>
+                                            </div>
+                                            <button class="btn btn-primary">Connect</button>
+                                        </div>
+                                    </div>
+                                    <div class="list-group-item">
+                                        <div class="d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h5 class="mb-1"><i class="bi bi-telegram me-2"></i> Telegram</h5>
+                                                <p class="mb-1 text-muted">Chat with your assistant from anywhere</p>
+                                            </div>
+                                            <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#telegramModal">Connect</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Telegram Bot Tab -->
+                    <div class="tab-pane fade" id="bot">
+                        <div class="card border-0 shadow-sm mb-4">
+                            <div class="card-body">
+                                <h4 class="card-title">Telegram Bot</h4>
+                                <p class="card-text">
+                                    Interact with your assistant through Telegram for convenient access anywhere.
+                                </p>
+                                
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    You need to start the bot on this server before connecting via Telegram.
+                                </div>
+                                
+                                <form action="{{ url_for('start_bot') }}" method="POST" class="mt-4">
+                                    <button type="submit" class="btn btn-primary">
+                                        <i class="bi bi-play-fill me-2"></i> Start Telegram Bot
                                     </button>
-                                </div>
-                            </div>
-                            <div class="col-md-6 text-center">
-                                <div class="assistant-status">
-                                    <i data-feather="cpu" style="width: 80px; height: 80px;"></i>
-                                    <div class="status-indicator offline"></div>
-                                </div>
-                                <p class="mt-3">Status: <span class="badge bg-danger">Offline</span></p>
+                                </form>
+                                
+                                <hr>
+                                
+                                <h5 class="mt-4">Connection Instructions</h5>
+                                <ol class="mt-3">
+                                    <li>Start the bot on this server using the button above</li>
+                                    <li>Open Telegram and search for <code>@your_bot_username</code></li>
+                                    <li>Start a conversation with the bot</li>
+                                    <li>Enter the command <code>/start</code></li>
+                                    <li>Follow the instructions to link your account</li>
+                                </ol>
                             </div>
                         </div>
                     </div>
-                </div>
-
-                <div class="row">
-                    <div class="col-md-6">
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">
-                                    <i data-feather="mail" class="me-2"></i> Recent Emails
-                                </h5>
-                            </div>
+                    
+                    <!-- Memory Entries Tab -->
+                    <div class="tab-pane fade" id="memories">
+                        <div class="card border-0 shadow-sm mb-4">
                             <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">Meeting Tomorrow</h6>
-                                            <small class="text-muted">3 hours ago</small>
-                                        </div>
-                                        <p class="mb-1">From: john@example.com</p>
-                                        <small class="text-muted">Let's discuss the project progress...</small>
-                                    </li>
-                                    <li class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">Quarterly Report</h6>
-                                            <small class="text-muted">Yesterday</small>
-                                        </div>
-                                        <p class="mb-1">From: finance@company.com</p>
-                                        <small class="text-muted">Please find attached the quarterly report...</small>
-                                    </li>
-                                    <li class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">New Product Launch</h6>
-                                            <small class="text-muted">2 days ago</small>
-                                        </div>
-                                        <p class="mb-1">From: marketing@company.com</p>
-                                        <small class="text-muted">We're excited to announce our new product...</small>
-                                    </li>
-                                </ul>
-                                <div class="d-grid gap-2 mt-3">
-                                    <button class="btn btn-outline-primary btn-sm">View All Emails</button>
+                                <h4 class="card-title">Memory Entries</h4>
+                                <p class="card-text">
+                                    View and manage information your assistant has remembered.
+                                </p>
+                                
+                                <div class="alert alert-info mt-4">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    No memory entries found. Your assistant will automatically create entries as you interact with it.
+                                </div>
+                                
+                                <div class="table-responsive mt-4" style="display: none;">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th>Type</th>
+                                                <th>Created</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Memory entries will be displayed here -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-
-                    <div class="col-md-6">
-                        <div class="card mb-4">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">
-                                    <i data-feather="calendar" class="me-2"></i> Upcoming Events
-                                </h5>
-                            </div>
+                    
+                    <!-- Documents Tab -->
+                    <div class="tab-pane fade" id="documents">
+                        <div class="card border-0 shadow-sm mb-4">
                             <div class="card-body">
-                                <ul class="list-group list-group-flush">
-                                    <li class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">Team Meeting</h6>
-                                            <small class="text-warning">Today, 2:00 PM</small>
-                                        </div>
-                                        <p class="mb-1">Conference Room A</p>
-                                        <small class="text-muted">Weekly progress update with the development team</small>
-                                    </li>
-                                    <li class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">Client Presentation</h6>
-                                            <small class="text-primary">Tomorrow, 10:00 AM</small>
-                                        </div>
-                                        <p class="mb-1">Virtual Meeting</p>
-                                        <small class="text-muted">Presenting the new design concepts to the client</small>
-                                    </li>
-                                    <li class="list-group-item">
-                                        <div class="d-flex w-100 justify-content-between">
-                                            <h6 class="mb-1">Product Demo</h6>
-                                            <small class="text-muted">Oct 15, 3:30 PM</small>
-                                        </div>
-                                        <p class="mb-1">Main Auditorium</p>
-                                        <small class="text-muted">Showcasing the latest features to stakeholders</small>
-                                    </li>
-                                </ul>
-                                <div class="d-grid gap-2 mt-3">
-                                    <button class="btn btn-outline-primary btn-sm">View Full Calendar</button>
+                                <h4 class="card-title">Documents</h4>
+                                <p class="card-text">
+                                    View and manage documents processed by your assistant.
+                                </p>
+                                
+                                <div class="alert alert-info mt-4">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    No documents found. Connect your Google Drive or upload files through the Telegram bot.
+                                </div>
+                                
+                                <div class="table-responsive mt-4" style="display: none;">
+                                    <table class="table table-hover">
+                                        <thead>
+                                            <tr>
+                                                <th>Title</th>
+                                                <th>Type</th>
+                                                <th>Processed</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <!-- Documents will be displayed here -->
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-4">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">
-                            <i data-feather="file-text" class="me-2"></i> Recent Documents
-                        </h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table class="table table-hover">
-                                <thead>
-                                    <tr>
-                                        <th>Name</th>
-                                        <th>Type</th>
-                                        <th>Last Modified</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    <tr>
-                                        <td>Business Proposal</td>
-                                        <td><span class="badge bg-primary">PDF</span></td>
-                                        <td>Oct 10, 2023</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i data-feather="eye" class="feather-sm"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i data-feather="download" class="feather-sm"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Q3 Financial Report</td>
-                                        <td><span class="badge bg-success">Excel</span></td>
-                                        <td>Oct 5, 2023</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i data-feather="eye" class="feather-sm"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i data-feather="download" class="feather-sm"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Meeting Notes</td>
-                                        <td><span class="badge bg-info">Doc</span></td>
-                                        <td>Oct 2, 2023</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i data-feather="eye" class="feather-sm"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i data-feather="download" class="feather-sm"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td>Project Timeline</td>
-                                        <td><span class="badge bg-warning">PPT</span></td>
-                                        <td>Sep 28, 2023</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-outline-primary">
-                                                <i data-feather="eye" class="feather-sm"></i>
-                                            </button>
-                                            <button class="btn btn-sm btn-outline-secondary">
-                                                <i data-feather="download" class="feather-sm"></i>
-                                            </button>
-                                        </td>
-                                    </tr>
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="d-grid gap-2 mt-3">
-                            <button class="btn btn-outline-primary btn-sm">View All Documents</button>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    
+    <!-- Telegram Connection Modal -->
+    <div class="modal fade" id="telegramModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Connect Telegram</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <p>To connect your Telegram account, follow these steps:</p>
+                    <ol>
+                        <li>Make sure the bot is started on the server</li>
+                        <li>Open Telegram and search for <code>@your_bot_username</code></li>
+                        <li>Start a conversation with the bot</li>
+                        <li>Enter the command <code>/start</code></li>
+                        <li>When prompted, enter this connection code: <code>ABC123</code></li>
+                    </ol>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <footer class="bg-dark text-light py-4 mt-5">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6">
-                    <h5>OpenManus Executive Assistant</h5>
-                    <p>Powered by the OpenManus framework</p>
-                </div>
-                <div class="col-md-6 text-md-end">
-                    <ul class="list-inline">
-                        <li class="list-inline-item"><a href="#" class="text-light">Privacy Policy</a></li>
-                        <li class="list-inline-item"><a href="#" class="text-light">Terms of Service</a></li>
-                        <li class="list-inline-item"><a href="#" class="text-light">Support</a></li>
-                    </ul>
-                </div>
-            </div>
-            <hr>
-            <div class="text-center">
-                <p>&copy; 2023 OpenManus Executive Assistant. All rights reserved.</p>
-            </div>
+    <!-- Footer -->
+    <footer class="py-4 bg-dark text-light mt-5">
+        <div class="container text-center">
+            <p>Powered by OpenManus Framework &copy; 2025</p>
         </div>
     </footer>
 
+    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
-    <script>
-        // Initialize Feather icons
-        document.addEventListener('DOMContentLoaded', function() {
-            feather.replace();
-        });
-    </script>
 </body>
 </html>
