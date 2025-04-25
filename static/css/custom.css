@@ -1,0 +1,119 @@
+/* Custom styles for OpenManus Assistant */
+
+/* Feature Icons */
+.feature-icon {
+    width: 48px;
+    height: 48px;
+    color: var(--bs-primary);
+}
+
+.feature-icon-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 80px;
+}
+
+/* Assistant Icons */
+.assistant-icon {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 200px;
+    height: 200px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background-color: rgba(0, 123, 255, 0.1);
+    color: var(--bs-primary);
+}
+
+.assistant-status {
+    position: relative;
+    display: inline-block;
+}
+
+.status-indicator {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid var(--bs-dark);
+}
+
+.status-indicator.online {
+    background-color: var(--bs-success);
+}
+
+.status-indicator.offline {
+    background-color: var(--bs-danger);
+}
+
+.status-indicator.idle {
+    background-color: var(--bs-warning);
+}
+
+/* Avatar Placeholder */
+.avatar-placeholder {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: rgba(108, 117, 125, 0.2);
+    color: var(--bs-light);
+    margin: 0 auto;
+}
+
+/* Custom Cards */
+.card {
+    border: none;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+}
+
+/* Smaller feather icons for buttons */
+.feather-sm {
+    width: 16px;
+    height: 16px;
+}
+
+/* List group item styling */
+.list-group-item {
+    border-left: none;
+    border-right: none;
+    padding: 1rem;
+}
+
+.list-group-item:first-child {
+    border-top: none;
+}
+
+.list-group-item:last-child {
+    border-bottom: none;
+}
+
+/* Auth page styling */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    text-align: center;
+    margin: 1.5rem 0;
+}
+
+.auth-divider::before,
+.auth-divider::after {
+    content: '';
+    flex: 1;
+    border-bottom: 1px solid var(--bs-secondary);
+}
+
+.auth-divider span {
+    padding: 0 1rem;
+}

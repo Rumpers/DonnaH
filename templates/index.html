@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OpenManus Executive Assistant</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container">
+            <a class="navbar-brand" href="/">
+                <span class="fs-4">OpenManus</span> Executive Assistant
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/auth">Login/Register</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="py-5 text-center bg-primary bg-opacity-10">
+        <div class="container">
+            <h1 class="display-4">Your Executive Assistant</h1>
+            <p class="lead">Powered by OpenManus AI Framework</p>
+            <div class="d-grid gap-2 d-sm-flex justify-content-sm-center mt-4">
+                <a href="/auth" class="btn btn-primary btn-lg px-4 gap-3">Get Started</a>
+                <a href="#features" class="btn btn-outline-secondary btn-lg px-4">Learn More</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Features Section -->
+    <section id="features" class="py-5">
+        <div class="container">
+            <h2 class="text-center mb-5">Key Features</h2>
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 bg-dark">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <svg width="50" height="50" fill="currentColor" class="text-primary">
+                                    <path d="M8 8h32v4H8zm0 10h32v4H8zm0 10h32v4H8z"/>
+                                </svg>
+                            </div>
+                            <h4 class="card-title">Email Management</h4>
+                            <p class="card-text">Seamlessly manage your emails with smart filtering, automated responses, and priority inbox.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 bg-dark">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <svg width="50" height="50" fill="currentColor" class="text-primary">
+                                    <path d="M2 4v36h44V4H2zm40 32H6V8h36v28z"/>
+                                    <path d="M30 12H18c-3.3 0-6 2.7-6 6v12c0 3.3 2.7 6 6 6h12c3.3 0 6-2.7 6-6V18c0-3.3-2.7-6-6-6zm-6 6h6v6h-6v-6z"/>
+                                </svg>
+                            </div>
+                            <h4 class="card-title">Calendar Integration</h4>
+                            <p class="card-text">Intelligent scheduling, meeting management, and reminders to keep you organized.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card h-100 border-0 bg-dark">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <svg width="50" height="50" fill="currentColor" class="text-primary">
+                                    <path d="M40 8H8c-2.2 0-4 1.8-4 4v24c0 2.2 1.8 4 4 4h32c2.2 0 4-1.8 4-4V12c0-2.2-1.8-4-4-4zm-4 20H12v-4h24v4z"/>
+                                </svg>
+                            </div>
+                            <h4 class="card-title">Document Processing</h4>
+                            <p class="card-text">Automatic organization, summarization, and retrieval of your documents.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mt-4">
+                    <div class="card h-100 border-0 bg-dark">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <svg width="50" height="50" fill="currentColor" class="text-primary">
+                                    <path d="M24 4C12.95 4 4 12.95 4 24s8.95 20 20 20 20-8.95 20-20S35.05 4 24 4zm0 36c-8.84 0-16-7.16-16-16S15.16 8 24 8s16 7.16 16 16-7.16 16-16 16z"/>
+                                    <path d="M24 12v12l8 8"/>
+                                </svg>
+                            </div>
+                            <h4 class="card-title">Memory System</h4>
+                            <p class="card-text">Remembers important information, projects, and contacts for quick recall.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mt-4">
+                    <div class="card h-100 border-0 bg-dark">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <svg width="50" height="50" fill="currentColor" class="text-primary">
+                                    <path d="M44 24c0 11.05-8.95 20-20 20S4 35.05 4 24 12.95 4 24 4s20 8.95 20 20z"/>
+                                    <path d="M24 12v12l8 8" stroke="#000" stroke-width="2" fill="none"/>
+                                </svg>
+                            </div>
+                            <h4 class="card-title">Drive Integration</h4>
+                            <p class="card-text">Access and manage your Google Drive files with voice commands and natural language.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4 mt-4">
+                    <div class="card h-100 border-0 bg-dark">
+                        <div class="card-body text-center">
+                            <div class="mb-3">
+                                <svg width="50" height="50" fill="currentColor" class="text-primary">
+                                    <path d="M40 12H8c-2.2 0-4 1.8-4 4v16c0 2.2 1.8 4 4 4h4v8l8-8h20c2.2 0 4-1.8 4-4V16c0-2.2-1.8-4-4-4z"/>
+                                </svg>
+                            </div>
+                            <h4 class="card-title">Telegram Bot</h4>
+                            <p class="card-text">Access all features from your favorite messaging app for seamless communication.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How It Works Section -->
+    <section class="py-5 bg-dark bg-opacity-50">
+        <div class="container">
+            <h2 class="text-center mb-5">How It Works</h2>
+            <div class="row">
+                <div class="col-md-8 offset-md-2">
+                    <div class="d-flex flex-column">
+                        <div class="d-flex mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary rounded-circle p-3 text-center" style="width: 60px; height: 60px;">
+                                    <h3 class="m-0">1</h3>
+                                </div>
+                            </div>
+                            <div class="ms-4">
+                                <h4>Register and Connect</h4>
+                                <p>Create your account and connect your Google services (Gmail, Calendar, Drive) for full functionality.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex mb-4">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary rounded-circle p-3 text-center" style="width: 60px; height: 60px;">
+                                    <h3 class="m-0">2</h3>
+                                </div>
+                            </div>
+                            <div class="ms-4">
+                                <h4>Link Telegram</h4>
+                                <p>Connect your Telegram account to access your executive assistant from anywhere.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex">
+                            <div class="flex-shrink-0">
+                                <div class="bg-primary rounded-circle p-3 text-center" style="width: 60px; height: 60px;">
+                                    <h3 class="m-0">3</h3>
+                                </div>
+                            </div>
+                            <div class="ms-4">
+                                <h4>Start Using Your Assistant</h4>
+                                <p>Send requests via Telegram or manage everything from your web dashboard.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Get Started CTA -->
+    <section class="py-5 bg-primary bg-opacity-10 text-center">
+        <div class="container">
+            <h2 class="mb-3">Ready to Get Started?</h2>
+            <p class="lead mb-4">Experience the power of AI-driven productivity today.</p>
+            <a href="/auth" class="btn btn-primary btn-lg">Create Your Account</a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="py-4 bg-dark text-light">
+        <div class="container text-center">
+            <p>Powered by OpenManus Framework &copy; 2025</p>
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Custom JS -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html>
