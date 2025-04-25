@@ -135,7 +135,8 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return render_template('dashboard.html')
+    from models import MemoryEntry, Document
+    return render_template('dashboard.html', MemoryEntry=MemoryEntry, Document=Document)
 
 @app.route('/start_bot', methods=['POST'])
 @login_required
