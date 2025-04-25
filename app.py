@@ -1,9 +1,11 @@
 import os
 import logging
-from flask import Flask, render_template, request, redirect, url_for, session, flash
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
