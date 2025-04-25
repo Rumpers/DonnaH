@@ -46,6 +46,10 @@ import telegram_bot  # Import but don't initialize
 from google_services import initialize_google_services
 from manus_integration import initialize_manus
 from memory_system import initialize_memory_system
+from google_auth import google_auth  # Import the Google OAuth blueprint
+
+# Register blueprints
+app.register_blueprint(google_auth)
 
 # User loader for Flask-Login
 @login_manager.user_loader
