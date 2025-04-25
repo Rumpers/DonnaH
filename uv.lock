@@ -2259,10 +2259,13 @@ dependencies = [
     { name = "langchain-community" },
     { name = "openai" },
     { name = "psycopg2-binary" },
+    { name = "pydantic" },
     { name = "pypdf2" },
     { name = "python-dateutil" },
     { name = "python-docx" },
     { name = "python-telegram-bot" },
+    { name = "pyyaml" },
+    { name = "tenacity" },
 ]
 
 [package.metadata]
@@ -2279,10 +2282,13 @@ requires-dist = [
     { name = "langchain-community", specifier = ">=0.3.22" },
     { name = "openai", specifier = ">=1.76.0" },
     { name = "psycopg2-binary", specifier = ">=2.9.10" },
+    { name = "pydantic", specifier = ">=2.11.3" },
     { name = "pypdf2", specifier = ">=3.0.1" },
     { name = "python-dateutil", specifier = ">=2.9.0.post0" },
     { name = "python-docx", specifier = ">=1.1.2" },
     { name = "python-telegram-bot", specifier = ">=22.0" },
+    { name = "pyyaml", specifier = ">=6.0.2" },
+    { name = "tenacity", specifier = ">=9.1.2" },
 ]
 
 [[package]]
