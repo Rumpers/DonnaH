@@ -333,7 +333,6 @@ def inspect_users():
     return "User information printed to console."
 
 @app.route('/setup_telegram_webhook', methods=['POST'])
-@login_required
 def setup_telegram_webhook():
     """Set up the Telegram webhook."""
     try:
@@ -370,7 +369,6 @@ def setup_telegram_webhook():
     return redirect(url_for('dashboard'))
     
 @app.route('/remove_telegram_webhook', methods=['POST'])
-@login_required
 def remove_telegram_webhook():
     """Remove the Telegram webhook."""
     try:
