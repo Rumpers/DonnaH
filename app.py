@@ -255,3 +255,10 @@ with app.app_context():
         logger.info("All services initialized successfully")
     except Exception as e:
         logger.error(f"Error initializing services: {e}")
+
+@app.route('/inspect_users')
+def inspect_users():
+    users = User.query.all()
+    for user in users:
+        print(f'User ID: {user.id}, Username: {user.username}, Email: {user.email}')
+    return "User information printed to console."
