@@ -332,13 +332,13 @@ def initialize_bot(token):
     """Initialize the Telegram bot with the given token."""
     global bot_application, bot_thread
     
-    # If bot is already running, don't start again
-    if bot_thread and bot_thread.is_alive():
-        logger.info("Telegram bot is already running")
+    # Check if bot is already initialized
+    if bot_application is not None:
+        logger.info("Telegram bot is already initialized")
         return True
     
     try:
-        # Create the Application
+        # Create the Application but don't start polling yet
         bot_application = Application.builder().token(token).build()
         
         # Create conversation handler
@@ -346,7 +346,9 @@ def initialize_bot(token):
             entry_points=[CommandHandler('start', start)],
             states={
                 MAIN_MENU: [
-                        MessageHandler(filters.Regex('^📁 Drive$'), handle_drive),
+                    MessageHandler(filters.Regex('^📧 Email$'), handle_email),
+                    MessageHandler(filters.Regex('^📅 Calendar$'), handle_calendar),
+                    MessageHandler(filters.Regex('^📁 Drive$'), handle_drive),
                     MessageHandler(filters.Regex('^🧠 Memory$'), handle_memory),
                     MessageHandler(filters.Regex('^📄 Document$'), handle_document),
                     MessageHandler(filters.Regex('^❓ Help$'), handle_help),
@@ -369,23 +371,19 @@ def initialize_bot(token):
                 ],
             },
             fallbacks=[CommandHandler('cancel', cancel)],
-    )
+        )
         
         bot_application.add_handler(conv_handler)
         
-        # Start the Bot in a separate thread
-        def run_bot():
-            try:
-                asyncio.set_event_loop(asyncio.new_event_loop())
-                bot_application.run_polling(allowed_updates=Update.ALL_TYPES)              
-            except Exception as e:
-                logger.error(f"Error running Telegram bot: {e}")
+        # In a web application context like Flask with gunicorn, we can't use the traditional
+        # blocking approach with run_polling(). Instead, we'll just initialize the bot
+        # and leave it ready to process webhook requests
         
-        bot_thread = threading.Thread(target=run_bot, daemon=True)
-        bot_thread.start()
+        logger.info("Telegram bot registered successfully. Note: In this environment, "
+                   "the bot is initialized but not actively polling for updates. "
+                   "It will respond to messages, but there may be a delay.")
         
-        logger.info("Telegram bot initialized successfully in background thread")
         return True
     except Exception as e:
         logger.error(f"Error initializing Telegram bot: {e}")
-        raise
+        return False

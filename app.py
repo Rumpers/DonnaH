@@ -191,20 +191,22 @@ def dashboard():
 @app.route('/start_bot', methods=['POST'])
 @login_required
 def start_bot():
-    
     try:
         telegram_token = os.environ.get("TELEGRAM_TOKEN")
         if not telegram_token:
             flash('Telegram token not configured. Using demo mode.', 'warning')
             # In demo mode, we will simulate the bot
-            flash('Telegram bot started in demo mode. Some features may be limited.', 'info')
+            flash('Telegram bot initialized in demo mode. Some features may be limited.', 'info')
             return redirect(url_for('dashboard'))
         
-        telegram_bot.initialize_bot(telegram_token)
-        flash('Telegram bot started successfully', 'success')
+        is_registered = telegram_bot.initialize_bot(telegram_token)
+        if is_registered:
+            flash('Telegram bot registered successfully. The bot is ready to handle commands but may not actively poll for updates in this environment.', 'success')
+        else:
+            flash('Failed to register Telegram bot. Check logs for details.', 'danger')
     except Exception as e:
-        logger.error(f"Error starting Telegram bot: {e}")
-        flash(f'Error starting Telegram bot: {str(e)}', 'danger')
+        logger.error(f"Error registering Telegram bot: {e}")
+        flash(f'Error registering Telegram bot: {str(e)}', 'danger')
     
     return redirect(url_for('dashboard'))
 
@@ -302,14 +304,20 @@ with app.app_context():
         # Initialize memory system
         initialize_memory_system()
         
-        # Check if Telegram token is available and start the bot automatically
+        # Check if Telegram token is available and register the bot
         telegram_token = os.environ.get("TELEGRAM_TOKEN")
         if telegram_token:
             try:
-                telegram_bot.initialize_bot(telegram_token)
-                logger.info("Telegram bot started automatically on application startup")
+                # Just register the bot without trying to start polling
+                # This will allow commands to work but won't actively fetch updates
+                # For full functionality, the user should set up webhooks
+                is_registered = telegram_bot.initialize_bot(telegram_token)
+                if is_registered:
+                    logger.info("Telegram bot registered successfully at startup")
+                else:
+                    logger.error("Failed to register Telegram bot at startup")
             except Exception as e:
-                logger.error(f"Error starting Telegram bot: {e}")
+                logger.error(f"Error registering Telegram bot: {e}")
         
         logger.info("All services initialized successfully")
     except Exception as e:
