@@ -187,6 +187,43 @@ def start_bot():
     
     return redirect(url_for('dashboard'))
 
+@app.route('/debug_users')
+def debug_users():
+    from models import User
+    try:
+        users = User.query.all()
+        user_data = [
+            {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'created_at': str(user.created_at) if hasattr(user, 'created_at') else None
+            }
+            for user in users
+        ]
+        return jsonify({"user_count": len(users), "users": user_data})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+@app.route('/try_login')
+def try_login():
+    """Helper route to automatically log in as the first user"""
+    from models import User
+    try:
+        user = User.query.first()
+        if not user:
+            return jsonify({"error": "No users found in database"})
+        
+        # Log the user in
+        login_user(user)
+        session['user_id'] = user.id
+        logger.info(f"Auto-login successful for user {user.username} (ID: {user.id})")
+        flash(f'Auto-login successful! Welcome back, {user.username}.', 'success')
+        return redirect(url_for('dashboard'))
+    except Exception as e:
+        logger.error(f"Error during auto-login: {str(e)}")
+        return jsonify({"error": str(e)})
+
 # Initialize database
 with app.app_context():
     # Import models
