@@ -481,8 +481,95 @@ async def process_update(update_data):
         # Convert the update data to a Telegram Update object
         update = Update.de_json(data=update_data, bot=bot_application.bot)
         
-        # Process the update
-        await bot_application.process_update(update)
+        # Handle the update manually instead of using process_update
+        # This avoids the "Application not initialized" error
+        chat_id = update.message.chat_id
+        user_id = update.message.from_user.id
+        text = update.message.text
+        
+        logger.info(f"Received message from user {user_id} in chat {chat_id}: {text}")
+        
+        # Check if this is a command
+        if text.startswith('/'):
+            if text.startswith('/start'):
+                # Check if user exists in the database
+                from models import User
+                telegram_id = str(user_id)
+                db_user = User.query.filter_by(telegram_id=telegram_id).first()
+                
+                if db_user:
+                    # User already registered
+                    await bot_application.bot.send_message(
+                        chat_id=chat_id,
+                        text=f"Welcome back, {db_user.username}! How can I help you today?\n\n"
+                             "You can ask me about your emails, calendar events, documents, or anything else you need help with."
+                    )
+                else:
+                    # User not registered - prompt for linking with user ID
+                    await bot_application.bot.send_message(
+                        chat_id=chat_id,
+                        text="Welcome to OpenManus Executive Assistant! I'm your AI-powered assistant.\n\n"
+                             "To link this Telegram account with your registered web account, please enter your user ID number.\n"
+                             "You can find your user ID on the dashboard in the Telegram Bot section."
+                    )
+            elif text.startswith('/help'):
+                # Send help message
+                await bot_application.bot.send_message(
+                    chat_id=chat_id,
+                    text="I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n"
+                         "📧 *Email*: Check inbox, send emails, search for messages\n"
+                         "📅 *Calendar*: View schedule, create events, find free time\n"
+                         "📁 *Drive*: Manage documents, create files, share content\n"
+                         "🧠 *Memory*: Remember information and recall it later\n"
+                         "📄 *Document*: Process, summarize, and file documents\n\n"
+                         "You can navigate using the keyboard menu or simply tell me what you need help with!"
+                )
+        else:
+            # Check if this could be a user ID for account linking
+            from models import User
+            telegram_id = str(user_id)
+            db_user = User.query.filter_by(telegram_id=telegram_id).first()
+            
+            if not db_user:
+                # No linked account yet, this might be a user ID
+                try:
+                    input_user_id = int(text.strip())
+                    
+                    # Look up the user by ID
+                    user = User.query.get(input_user_id)
+                    if user:
+                        # Link Telegram ID to user
+                        user.telegram_id = telegram_id
+                        from app import db
+                        db.session.commit()
+                        
+                        await bot_application.bot.send_message(
+                            chat_id=chat_id,
+                            text=f"Account linked successfully! Welcome, {user.username}!\n\n"
+                                 "You can now use your assistant through Telegram. How can I help you today?"
+                        )
+                        return True
+                except ValueError:
+                    # Not a user ID, just a regular message
+                    pass
+            
+            # Regular message processing with OpenManus
+            if db_user:
+                from manus_integration import process_message as manus_process
+                
+                # Process with OpenManus
+                response = manus_process(db_user, text, None)
+                
+                await bot_application.bot.send_message(
+                    chat_id=chat_id,
+                    text=response
+                )
+            else:
+                await bot_application.bot.send_message(
+                    chat_id=chat_id,
+                    text="I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
+                )
+        
         return True
     except Exception as e:
         logger.error(f"Error processing update: {e}")
