@@ -506,8 +506,23 @@ def setup_webhook(url):
         # Get the bot instance
         bot = bot_application.bot
         
-        # Set the webhook
-        webhook_info = bot.set_webhook(url=url)
+        # Use async event loop to run the coroutine
+        import asyncio
+        
+        async def async_set_webhook():
+            try:
+                # Set the webhook
+                webhook_info = await bot.set_webhook(url=url)
+                return webhook_info
+            except Exception as e:
+                logger.error(f"Error in async set_webhook: {e}")
+                return False
+        
+        # Run the async function in the event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        webhook_info = loop.run_until_complete(async_set_webhook())
+        loop.close()
         
         if webhook_info:
             logger.info(f"Webhook set up successfully at {url}")
@@ -529,8 +544,23 @@ def remove_webhook():
         # Get the bot instance
         bot = bot_application.bot
         
-        # Remove the webhook
-        success = bot.delete_webhook()
+        # Use async event loop to run the coroutine
+        import asyncio
+        
+        async def async_remove_webhook():
+            try:
+                # Remove the webhook
+                success = await bot.delete_webhook()
+                return success
+            except Exception as e:
+                logger.error(f"Error in async remove_webhook: {e}")
+                return False
+        
+        # Run the async function in the event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        success = loop.run_until_complete(async_remove_webhook())
+        loop.close()
         
         if success:
             logger.info("Webhook removed successfully")

@@ -311,10 +311,22 @@ with app.app_context():
             try:
                 # Just register the bot without trying to start polling
                 # This will allow commands to work but won't actively fetch updates
-                # For full functionality, the user should set up webhooks
                 is_registered = telegram_bot.initialize_bot(telegram_token)
                 if is_registered:
                     logger.info("Telegram bot registered successfully at startup")
+                    
+                    # Automatically set up the webhook for Telegram
+                    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+                    if replit_domain:
+                        webhook_url = f"https://{replit_domain}/telegram_webhook"
+                        success = telegram_bot.setup_webhook(webhook_url)
+                        
+                        if success:
+                            logger.info(f"Telegram webhook set up automatically at {webhook_url}")
+                        else:
+                            logger.warning("Failed to set up Telegram webhook automatically")
+                    else:
+                        logger.warning("Replit domain not available. Webhook setup skipped.")
                 else:
                     logger.error("Failed to register Telegram bot at startup")
             except Exception as e:
