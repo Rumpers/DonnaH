@@ -29,6 +29,7 @@ login_manager.init_app(app)
 login_manager.login_view = 'auth'
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "warning"
+login_manager.session_protection = "strong"
 
 # Configure database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///manus_assistant.db")
@@ -90,6 +91,15 @@ def register():
     
     logger.debug("Registration form submitted")
     
+    # Log all form data to troubleshoot
+    form_data = dict(request.form)
+    # Remove password from logs for security
+    if 'password' in form_data:
+        form_data['password'] = '********'
+    if 'confirm_password' in form_data:
+        form_data['confirm_password'] = '********'
+    logger.debug(f"All form data: {form_data}")
+    
     username = request.form.get('username')
     email = request.form.get('email')
     password = request.form.get('password')
@@ -127,12 +137,22 @@ def register():
         
         db.session.add(new_user)
         db.session.commit()
+        logger.debug(f"User committed to database with ID: {new_user.id}")
         
         # Log the user in
-        login_user(new_user)
+        login_successful = login_user(new_user)
+        logger.debug(f"login_user result: {login_successful}")
+        
         session['user_id'] = new_user.id
+        logger.debug(f"Session user_id set to: {session.get('user_id')}")
+        
         logger.info(f"User {username} (ID: {new_user.id}) registered successfully")
         flash('Registration successful! Welcome to OpenManus Assistant.', 'success')
+        
+        # Debug current_user after login
+        logger.debug(f"current_user.is_authenticated: {current_user.is_authenticated}")
+        logger.debug(f"current_user.id: {current_user.id if current_user.is_authenticated else 'Not authenticated'}")
+        
         return redirect(url_for('dashboard'))
     except Exception as e:
         logger.error(f"Error during registration: {str(e)}")
@@ -215,13 +235,51 @@ def try_login():
             return jsonify({"error": "No users found in database"})
         
         # Log the user in
-        login_user(user)
+        login_successful = login_user(user)
         session['user_id'] = user.id
         logger.info(f"Auto-login successful for user {user.username} (ID: {user.id})")
+        logger.debug(f"login_user result: {login_successful}")
+        logger.debug(f"Session user_id: {session.get('user_id')}")
+        logger.debug(f"current_user.is_authenticated: {current_user.is_authenticated}")
+        
         flash(f'Auto-login successful! Welcome back, {user.username}.', 'success')
         return redirect(url_for('dashboard'))
     except Exception as e:
         logger.error(f"Error during auto-login: {str(e)}")
+        return jsonify({"error": str(e)})
+        
+@app.route('/dashboard_direct')
+def dashboard_direct():
+    """A version of the dashboard without the @login_required decorator for testing"""
+    from models import MemoryEntry, Document, User
+    
+    try:
+        # Get the first user for testing
+        user = User.query.first()
+        if not user:
+            flash('No users found in database', 'danger')
+            return redirect(url_for('auth'))
+            
+        # Get memory and document counts
+        memory_count = MemoryEntry.query.filter_by(user_id=user.id).count()
+        document_count = Document.query.filter_by(user_id=user.id).count()
+        
+        # Get the Replit domain for Google OAuth redirect URI
+        replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+        
+        # Set a flag to indicate this is a direct access (bypass login check)
+        is_direct_access = True
+        
+        return render_template(
+            'dashboard.html', 
+            memory_count=memory_count, 
+            document_count=document_count,
+            replit_domain=replit_domain,
+            is_direct_access=is_direct_access,
+            current_user=user  # Pass the user directly
+        )
+    except Exception as e:
+        logger.error(f"Error accessing dashboard directly: {str(e)}")
         return jsonify({"error": str(e)})
 
 # Initialize database
@@ -258,6 +316,7 @@ with app.app_context():
 
 @app.route('/inspect_users')
 def inspect_users():
+    from models import User
     users = User.query.all()
     for user in users:
         print(f'User ID: {user.id}, Username: {user.username}, Email: {user.email}')
