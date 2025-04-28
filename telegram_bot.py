@@ -346,11 +346,8 @@ def initialize_bot(token):
             entry_points=[CommandHandler('start', start)],
             states={
                 MAIN_MENU: [
-                        print(f"A
-                    MessageHandler(filters.Regex('^📁 Drive$'), handle_drive),
-                              except E
-                    
-        print(f"An error occurred: {e}")andler(filters.Regex('^🧠 Memory$'), handle_memory),
+                        MessageHandler(filters.Regex('^📁 Drive$'), handle_drive),
+                    MessageHandler(filters.Regex('^🧠 Memory$'), handle_memory),
                     MessageHandler(filters.Regex('^📄 Document$'), handle_document),
                     MessageHandler(filters.Regex('^❓ Help$'), handle_help),
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
