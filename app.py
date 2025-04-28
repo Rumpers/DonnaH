@@ -88,41 +88,57 @@ def login():
 def register():
     from models import User
     
+    logger.debug("Registration form submitted")
+    
     username = request.form.get('username')
     email = request.form.get('email')
     password = request.form.get('password')
     confirm_password = request.form.get('confirm_password')
     
+    logger.debug(f"Form data: username={username}, email={email}")
+    
     # Validate form data
     if not all([username, email, password, confirm_password]):
+        logger.warning("Missing required fields in registration form")
         flash('All fields are required.', 'danger')
         return redirect(url_for('auth'))
     
     if password != confirm_password:
+        logger.warning("Passwords do not match in registration form")
         flash('Passwords do not match.', 'danger')
         return redirect(url_for('auth'))
     
     # Check if user already exists
     existing_user = User.query.filter_by(email=email).first()
     if existing_user:
+        logger.info(f"Email {email} already registered")
         flash('Email already registered. Please login instead.', 'warning')
         return redirect(url_for('auth'))
     
-    # Create new user
-    new_user = User(
-        username=username, 
-        email=email, 
-        password_hash=generate_password_hash(password)
-    )
-    
-    db.session.add(new_user)
-    db.session.commit()
-    
-    # Log the user in
-    login_user(new_user)
-    session['user_id'] = new_user.id
-    flash('Registration successful! Welcome to OpenManus Assistant.', 'success')
-    return redirect(url_for('dashboard'))
+    try:
+        # Create new user
+        new_user = User(
+            username=username, 
+            email=email, 
+            password_hash=generate_password_hash(password)
+        )
+        
+        logger.debug(f"Created new user object: {new_user}")
+        
+        db.session.add(new_user)
+        db.session.commit()
+        
+        # Log the user in
+        login_user(new_user)
+        session['user_id'] = new_user.id
+        logger.info(f"User {username} (ID: {new_user.id}) registered successfully")
+        flash('Registration successful! Welcome to OpenManus Assistant.', 'success')
+        return redirect(url_for('dashboard'))
+    except Exception as e:
+        logger.error(f"Error during registration: {str(e)}")
+        db.session.rollback()
+        flash(f'An error occurred during registration: {str(e)}', 'danger')
+        return redirect(url_for('auth'))
 
 @app.route('/logout')
 def logout():
