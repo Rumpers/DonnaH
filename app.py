@@ -44,6 +44,7 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db.init_app(app)
 
 # Import service functions after app is created to avoid circular imports
+import json
 import telegram_bot  # Import but don't initialize
 from google_services import initialize_google_services
 from manus_integration import initialize_manus
@@ -330,3 +331,90 @@ def inspect_users():
     for user in users:
         print(f'User ID: {user.id}, Username: {user.username}, Email: {user.email}')
     return "User information printed to console."
+
+@app.route('/setup_telegram_webhook', methods=['POST'])
+@login_required
+def setup_telegram_webhook():
+    """Set up the Telegram webhook."""
+    try:
+        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+        replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+        
+        if not telegram_token:
+            flash('Telegram token not configured. Cannot set up webhook.', 'danger')
+            return redirect(url_for('dashboard'))
+            
+        if not replit_domain:
+            flash('Replit domain not available. Cannot set up webhook.', 'danger')
+            return redirect(url_for('dashboard'))
+            
+        # Initialize bot if not already initialized
+        is_registered = telegram_bot.initialize_bot(telegram_token)
+        if not is_registered:
+            flash('Failed to initialize Telegram bot. Check logs for details.', 'danger')
+            return redirect(url_for('dashboard'))
+            
+        # Set up webhook
+        webhook_url = f"https://{replit_domain}/telegram_webhook"
+        success = telegram_bot.setup_webhook(webhook_url)
+        
+        if success:
+            flash(f'Telegram webhook set up successfully at {webhook_url}', 'success')
+        else:
+            flash('Failed to set up webhook. Check logs for details.', 'danger')
+            
+    except Exception as e:
+        logger.error(f"Error setting up webhook: {str(e)}")
+        flash(f'Error setting up webhook: {str(e)}', 'danger')
+        
+    return redirect(url_for('dashboard'))
+    
+@app.route('/remove_telegram_webhook', methods=['POST'])
+@login_required
+def remove_telegram_webhook():
+    """Remove the Telegram webhook."""
+    try:
+        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+        
+        if not telegram_token:
+            flash('Telegram token not configured. Cannot remove webhook.', 'danger')
+            return redirect(url_for('dashboard'))
+            
+        # Initialize bot if not already initialized
+        is_registered = telegram_bot.initialize_bot(telegram_token)
+        if not is_registered:
+            flash('Failed to initialize Telegram bot. Check logs for details.', 'danger')
+            return redirect(url_for('dashboard'))
+            
+        # Remove webhook
+        success = telegram_bot.remove_webhook()
+        
+        if success:
+            flash('Telegram webhook removed successfully', 'success')
+        else:
+            flash('Failed to remove webhook. Check logs for details.', 'danger')
+            
+    except Exception as e:
+        logger.error(f"Error removing webhook: {str(e)}")
+        flash(f'Error removing webhook: {str(e)}', 'danger')
+        
+    return redirect(url_for('dashboard'))
+    
+@app.route('/telegram_webhook', methods=['POST'])
+async def telegram_webhook():
+    """
+    Handle Telegram webhook requests.
+    This route receives updates from Telegram when a user interacts with the bot.
+    """
+    try:
+        # Get the update data from the request
+        update_data = json.loads(request.data)
+        logger.debug(f"Received update from Telegram: {update_data}")
+        
+        # Process the update asynchronously
+        await telegram_bot.process_update(update_data)
+        
+        return jsonify({"status": "success"})
+    except Exception as e:
+        logger.error(f"Error processing Telegram update: {str(e)}")
+        return jsonify({"status": "error", "message": str(e)}), 500

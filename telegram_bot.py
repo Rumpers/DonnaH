@@ -328,8 +328,15 @@ async def cancel(update: Update, context: CallbackContext) -> int:
 # Global variable to track the bot thread
 bot_thread = None
 
-def initialize_bot(token):
-    """Initialize the Telegram bot with the given token."""
+def initialize_bot(token, webhook_url=None):
+    """
+    Initialize the Telegram bot with the given token.
+    
+    Args:
+        token (str): The Telegram bot token
+        webhook_url (str, optional): The webhook URL for the bot. If provided,
+                                   the bot will be set up to use webhooks.
+    """
     global bot_application, bot_thread
     
     # Check if bot is already initialized
@@ -338,7 +345,7 @@ def initialize_bot(token):
         return True
     
     try:
-        # Create the Application but don't start polling yet
+        # Create the Application
         bot_application = Application.builder().token(token).build()
         
         # Create conversation handler
@@ -375,15 +382,85 @@ def initialize_bot(token):
         
         bot_application.add_handler(conv_handler)
         
-        # In a web application context like Flask with gunicorn, we can't use the traditional
-        # blocking approach with run_polling(). Instead, we'll just initialize the bot
-        # and leave it ready to process webhook requests
-        
-        logger.info("Telegram bot registered successfully. Note: In this environment, "
-                   "the bot is initialized but not actively polling for updates. "
-                   "It will respond to messages, but there may be a delay.")
-        
+        # Bot is now ready to be used with webhooks
+        logger.info("Telegram bot initialized successfully")
         return True
     except Exception as e:
         logger.error(f"Error initializing Telegram bot: {e}")
+        return False
+        
+async def process_update(update_data):
+    """
+    Process an update from Telegram webhook.
+    
+    Args:
+        update_data (dict): The update data from Telegram
+    """
+    if bot_application is None:
+        logger.error("Bot application not initialized")
+        return False
+    
+    try:
+        # Convert the update data to a Telegram Update object
+        update = Update.de_json(data=update_data, bot=bot_application.bot)
+        
+        # Process the update
+        await bot_application.process_update(update)
+        return True
+    except Exception as e:
+        logger.error(f"Error processing update: {e}")
+        return False
+        
+def setup_webhook(url):
+    """
+    Set up a webhook for the Telegram bot.
+    
+    Args:
+        url (str): The webhook URL
+    
+    Returns:
+        bool: True if successful, False otherwise
+    """
+    if bot_application is None:
+        logger.error("Bot application not initialized")
+        return False
+    
+    try:
+        # Get the bot instance
+        bot = bot_application.bot
+        
+        # Set the webhook
+        webhook_info = bot.set_webhook(url=url)
+        
+        if webhook_info:
+            logger.info(f"Webhook set up successfully at {url}")
+            return True
+        else:
+            logger.error("Failed to set up webhook")
+            return False
+    except Exception as e:
+        logger.error(f"Error setting up webhook: {e}")
+        return False
+        
+def remove_webhook():
+    """Remove the webhook for the Telegram bot."""
+    if bot_application is None:
+        logger.error("Bot application not initialized")
+        return False
+    
+    try:
+        # Get the bot instance
+        bot = bot_application.bot
+        
+        # Remove the webhook
+        success = bot.delete_webhook()
+        
+        if success:
+            logger.info("Webhook removed successfully")
+            return True
+        else:
+            logger.error("Failed to remove webhook")
+            return False
+    except Exception as e:
+        logger.error(f"Error removing webhook: {e}")
         return False

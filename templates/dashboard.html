@@ -225,25 +225,56 @@
                                 
                                 <div class="alert alert-info">
                                     <i class="bi bi-info-circle-fill me-2"></i>
-                                    You need to start the bot on this server before connecting via Telegram.
+                                    <strong>Webhook Required:</strong> Telegram bots on Replit work best with webhooks. Use the buttons below to set up the webhook connection.
                                 </div>
                                 
-                                <form action="{{ url_for('start_bot') }}" method="POST" class="mt-4">
-                                    <button type="submit" class="btn btn-primary">
-                                        <i class="bi bi-play-fill me-2"></i> Start Telegram Bot
-                                    </button>
-                                </form>
+                                <h5 class="mt-4">Bot Management</h5>
+                                <div class="row g-3 mt-2">
+                                    <div class="col-md-4">
+                                        <form action="{{ url_for('start_bot') }}" method="POST">
+                                            <button type="submit" class="btn btn-primary w-100">
+                                                <i class="bi bi-play-fill me-2"></i> Initialize Bot
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <form action="{{ url_for('setup_telegram_webhook') }}" method="POST">
+                                            <button type="submit" class="btn btn-success w-100">
+                                                <i class="bi bi-link-45deg me-2"></i> Set Up Webhook
+                                            </button>
+                                        </form>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <form action="{{ url_for('remove_telegram_webhook') }}" method="POST">
+                                            <button type="submit" class="btn btn-warning w-100">
+                                                <i class="bi bi-link-break me-2"></i> Remove Webhook
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                                
+                                <div class="alert alert-warning mt-3">
+                                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                    <strong>Important:</strong> Set up the webhook only after initializing the bot. This allows real-time message processing.
+                                </div>
                                 
                                 <hr>
                                 
                                 <h5 class="mt-4">Connection Instructions</h5>
                                 <ol class="mt-3">
-                                    <li>Start the bot on this server using the button above</li>
-                                    <li>Open Telegram and search for <code>@your_bot_username</code></li>
+                                    <li>Initialize the bot using the "Initialize Bot" button above</li>
+                                    <li>Set up the webhook using the "Set Up Webhook" button</li>
+                                    <li>Open Telegram and search for your bot username</li>
                                     <li>Start a conversation with the bot</li>
                                     <li>Enter the command <code>/start</code></li>
-                                    <li>Follow the instructions to link your account</li>
+                                    <li>When prompted, enter your user ID: <code>{{ current_user.id }}</code></li>
                                 </ol>
+                                
+                                <div class="alert alert-info mt-3">
+                                    <i class="bi bi-info-circle-fill me-2"></i>
+                                    <strong>Troubleshooting:</strong> If the bot doesn't respond after setting up the webhook, 
+                                    try removing and then re-setting the webhook. This will refresh the connection with Telegram's servers.
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -329,12 +360,17 @@
                 <div class="modal-body">
                     <p>To connect your Telegram account, follow these steps:</p>
                     <ol>
-                        <li>Make sure the bot is started on the server</li>
-                        <li>Open Telegram and search for <code>@your_bot_username</code></li>
+                        <li>Initialize the bot and set up the webhook using the buttons on the Bot page</li>
+                        <li>Open Telegram and search for your bot username</li>
                         <li>Start a conversation with the bot</li>
                         <li>Enter the command <code>/start</code></li>
-                        <li>When prompted, enter this connection code: <code>ABC123</code></li>
+                        <li>When prompted, enter this connection code: <code>{{ current_user.id }}</code></li>
                     </ol>
+                    
+                    <div class="alert alert-info mt-3">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Note:</strong> Make sure you've completed the webhook setup on the "Telegram Bot" page for the bot to respond to your messages.
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
