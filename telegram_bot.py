@@ -346,10 +346,11 @@ def initialize_bot(token):
             entry_points=[CommandHandler('start', start)],
             states={
                 MAIN_MENU: [
-                    MessageHandler(filters.Regex('^📧 Email$'), handle_email),
-                    MessageHandler(filters.Regex('^📅 Calendar$'), handle_calendar),
+                        print(f"A
                     MessageHandler(filters.Regex('^📁 Drive$'), handle_drive),
-                    MessageHandler(filters.Regex('^🧠 Memory$'), handle_memory),
+                              except E
+                    
+        print(f"An error occurred: {e}")andler(filters.Regex('^🧠 Memory$'), handle_memory),
                     MessageHandler(filters.Regex('^📄 Document$'), handle_document),
                     MessageHandler(filters.Regex('^❓ Help$'), handle_help),
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
@@ -370,8 +371,8 @@ def initialize_bot(token):
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
             },
-            fallbacks=[CommandHandler('cancel', cancel)],
-        )
+            fallbacks=[Command'cancel', cancel)],
+    )
         
         bot_application.add_handler(conv_handler)
         
@@ -379,9 +380,9 @@ def initialize_bot(token):
         def run_bot():
             try:
                 asyncio.set_event_loop(asyncio.new_event_loop())
-                bot_application.run_polling(allowed_updates=Update.ALL_TYPES)
-            except Exception as e:
-                logger.error(f"Error running Telegram bot: {e}")
+                bot_application.run_polling(allowed_updates=Update.ALL_TYPES)              
+       :
+            logger.error(f"Error running Telegram bot: {e}")
         
         bot_thread = threading.Thread(target=run_bot, daemon=True)
         bot_thread.start()
