@@ -56,10 +56,16 @@ async def start(update: Update, context: CallbackContext) -> int:
     db_user = User.query.filter_by(telegram_id=telegram_id).first()
     
     if not db_user:
+        # User is not registered yet - set state to wait for user ID
+        context.user_data['awaiting_user_id'] = True
+        
         await update.message.reply_text(
-            f"Hi {user.first_name}! I don't recognize you. Please register through the web interface first."
+            f"Hi {user.first_name}! I don't recognize your Telegram account.\n\n"
+            "To link this Telegram account with your registered web account, "
+            "please enter your user ID number.\n"
+            "You can find your user ID on the dashboard in the Telegram Bot section."
         )
-        return ConversationHandler.END
+        return MAIN_MENU  # Use MAIN_MENU state but with a flag to handle the user ID entry
     
     # Create new conversation
     conversation = Conversation(user_id=db_user.id)
@@ -270,7 +276,78 @@ async def process_message(update: Update, context: CallbackContext) -> int:
     user_message = update.message.text
     user = update.effective_user
     telegram_id = str(user.id)
+    
+    # Check if we're waiting for a user ID for account linking
+    if 'awaiting_user_id' in context.user_data and context.user_data['awaiting_user_id']:
+        try:
+            user_id_text = user_message.strip()
+            user_id = int(user_id_text)
+            
+            # Check if user exists
+            from models import User
+            
+            user = User.query.get(user_id)
+            if user:
+                # Link Telegram ID to user
+                user.telegram_id = telegram_id
+                db.session.commit()
+                
+                # Clear the awaiting flag
+                context.user_data.pop('awaiting_user_id', None)
+                
+                # Create a new conversation
+                conversation = Conversation(user_id=user.id)
+                db.session.add(conversation)
+                db.session.commit()
+                
+                # Store conversation ID in user context
+                context.user_data['conversation_id'] = conversation.id
+                
+                keyboard = [
+                    ['📧 Email', '📅 Calendar'],
+                    ['📁 Drive', '🧠 Memory'],
+                    ['📄 Document', '❓ Help']
+                ]
+                
+                reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
+                
+                await update.message.reply_text(
+                    f"Account linked successfully! Welcome, {user.username}!\n\n"
+                    "You can now use your assistant through Telegram. How can I help you today?",
+                    reply_markup=reply_markup
+                )
+                
+                # Save this message to the database
+                message = Message(
+                    conversation_id=conversation.id,
+                    content=f"Account linked successfully! Welcome, {user.username}! How can I help you today?",
+                    is_user=False
+                )
+                db.session.add(message)
+                db.session.commit()
+                
+                return MAIN_MENU
+            else:
+                await update.message.reply_text(
+                    "User ID not found. Please check the ID and try again, or register through the web interface."
+                )
+                return MAIN_MENU
+                
+        except ValueError:
+            await update.message.reply_text(
+                "Invalid user ID format. Please enter a numeric ID."
+            )
+            return MAIN_MENU
+    
+    # Normal message processing
     db_user = User.query.filter_by(telegram_id=telegram_id).first()
+    
+    # If user not found in database, prompt to register
+    if not db_user:
+        await update.message.reply_text(
+            "I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
+        )
+        return ConversationHandler.END
     
     # Save user message to database
     if 'conversation_id' in context.user_data:
