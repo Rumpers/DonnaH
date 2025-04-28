@@ -368,7 +368,7 @@ def initialize_bot(token):
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
             },
-            fallbacks=[Command'cancel', cancel)],
+            fallbacks=[CommandHandler('cancel', cancel)],
     )
         
         bot_application.add_handler(conv_handler)
@@ -378,8 +378,8 @@ def initialize_bot(token):
             try:
                 asyncio.set_event_loop(asyncio.new_event_loop())
                 bot_application.run_polling(allowed_updates=Update.ALL_TYPES)              
-       :
-            logger.error(f"Error running Telegram bot: {e}")
+            except Exception as e:
+                logger.error(f"Error running Telegram bot: {e}")
         
         bot_thread = threading.Thread(target=run_bot, daemon=True)
         bot_thread.start()
