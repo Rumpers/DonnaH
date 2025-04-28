@@ -228,6 +228,18 @@
                                     <strong>Webhook Required:</strong> Telegram bots on Replit work best with webhooks. Use the buttons below to set up the webhook connection.
                                 </div>
                                 
+                                {% if not current_user.telegram_id %}
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-person-badge me-2"></i>
+                                    <strong>Connect Your Account:</strong> Send your user ID <span class="badge bg-primary fs-5">{{ current_user.id }}</span> to the bot when prompted after using the /start command.
+                                </div>
+                                {% else %}
+                                <div class="alert alert-success">
+                                    <i class="bi bi-check-circle me-2"></i>
+                                    <strong>Account Connected:</strong> Your Telegram account is successfully linked!
+                                </div>
+                                {% endif %}
+                                
                                 <h5 class="mt-4">Bot Management</h5>
                                 <div class="row g-3 mt-2">
                                     <div class="col-md-4">

@@ -481,6 +481,16 @@ async def process_update(update_data):
         # Convert the update data to a Telegram Update object
         update = Update.de_json(data=update_data, bot=bot_application.bot)
         
+        # Check if this is a message update (could be other types like callback_query, etc.)
+        if not hasattr(update, 'message') or update.message is None:
+            logger.info("Received a non-message update, ignoring")
+            return True
+            
+        # Check if message has text (could be a photo, document, etc.)
+        if not hasattr(update.message, 'text') or update.message.text is None:
+            logger.info("Received a message without text, ignoring")
+            return True
+        
         # Handle the update manually instead of using process_update
         # This avoids the "Application not initialized" error
         chat_id = update.message.chat_id
