@@ -362,23 +362,37 @@ class RealOpenManus:
             # Create the prompt with user and context information
             prompt = f"{context}User {user.username}: {message}"
             
-            # Run the agent in the event loop
-            loop = asyncio.get_event_loop()
-            result = loop.run_until_complete(self._async_run(prompt))
+            # Use the synchronous OpenAI client call directly instead of asyncio
+            try:
+                system_prompt = self.system_prompt
+                messages = [
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": prompt}
+                ]
+                
+                # Call the OpenAI API directly
+                response = self.client.chat.completions.create(
+                    model="gpt-4-turbo",
+                    messages=messages,
+                    temperature=0.7,
+                    max_tokens=1000
+                )
+                
+                # Extract the response content
+                if response.choices and len(response.choices) > 0:
+                    result = {"response": response.choices[0].message.content, "error": False}
+                else:
+                    result = {"response": "No response generated.", "error": True}
+            except Exception as e:
+                logger.error(f"Error calling OpenAI API: {e}")
+                result = {"response": f"Error: {str(e)}", "error": True}
             
             if result["error"]:
                 return result["response"]
             
             # Format the response as expected by the caller
-            response = {
-                "message": result["response"],
-                "intents": [],  # We don't have explicit intents from OpenManus
-                "entities": {},  # We don't have explicit entities from OpenManus
-                "action": {"action": "none", "parameters": {}},
-                "confidence": 0.9
-            }
-            
-            return response
+            response_text = result["response"]
+            return response_text
         except Exception as e:
             logger.error(f"Error processing message with real OpenManus: {e}")
             return "I encountered an error processing your request."
