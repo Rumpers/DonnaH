@@ -1,8 +1,10 @@
-modules = ["python-3.11"]
 
 [nix]
 channel = "stable-24_05"
 packages = ["bash", "libxcrypt", "libyaml", "openssl", "postgresql"]
+
+[env]
+REPLIT_DISABLE_PACKAGE_LAYER = "1"
 
 [deployment]
 deploymentTarget = "autoscale"
