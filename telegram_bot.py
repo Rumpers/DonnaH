@@ -466,7 +466,7 @@ def initialize_bot(token, webhook_url=None):
         logger.error(f"Error initializing Telegram bot: {e}")
         return False
         
-async def process_update(update_data):
+def process_update(update_data):
     """
     Process an update from Telegram webhook.
     
@@ -509,31 +509,70 @@ async def process_update(update_data):
                 
                 if db_user:
                     # User already registered
-                    await bot_application.bot.send_message(
-                        chat_id=chat_id,
-                        text=f"Welcome back, {db_user.username}! How can I help you today?\n\n"
-                             "You can ask me about your emails, calendar events, documents, or anything else you need help with."
-                    )
+                    try:
+                        bot_application.bot.send_message(
+                            chat_id=chat_id,
+                            text=f"Welcome back, {db_user.username}! How can I help you today?\n\n"
+                                 "You can ask me about your emails, calendar events, documents, or anything else you need help with."
+                        )
+                    except Exception as e:
+                        logger.error(f"Error sending welcome message: {e}")
+                        # Fallback to a direct HTTP request
+                        try:
+                            import requests
+                            telegram_token = os.environ.get("TELEGRAM_TOKEN")
+                            requests.post(
+                                f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                                json={"chat_id": chat_id, "text": f"Welcome back, {db_user.username}! How can I help you today?\n\nYou can ask me about your emails, calendar events, documents, or anything else you need help with."}
+                            )
+                        except Exception as http_error:
+                            logger.error(f"Failed fallback request: {http_error}")
                 else:
                     # User not registered - prompt for linking with user ID
-                    await bot_application.bot.send_message(
-                        chat_id=chat_id,
-                        text="Welcome to OpenManus Executive Assistant! I'm your AI-powered assistant.\n\n"
-                             "To link this Telegram account with your registered web account, please enter your user ID number.\n"
-                             "You can find your user ID on the dashboard in the Telegram Bot section."
-                    )
+                    try:
+                        bot_application.bot.send_message(
+                            chat_id=chat_id,
+                            text="Welcome to OpenManus Executive Assistant! I'm your AI-powered assistant.\n\n"
+                                 "To link this Telegram account with your registered web account, please enter your user ID number.\n"
+                                 "You can find your user ID on the dashboard in the Telegram Bot section."
+                        )
+                    except Exception as e:
+                        logger.error(f"Error sending welcome message: {e}")
+                        # Fallback to a direct HTTP request
+                        try:
+                            import requests
+                            telegram_token = os.environ.get("TELEGRAM_TOKEN")
+                            requests.post(
+                                f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                                json={"chat_id": chat_id, "text": "Welcome to OpenManus Executive Assistant! I'm your AI-powered assistant.\n\nTo link this Telegram account with your registered web account, please enter your user ID number.\nYou can find your user ID on the dashboard in the Telegram Bot section."}
+                            )
+                        except Exception as http_error:
+                            logger.error(f"Failed fallback request: {http_error}")
             elif text.startswith('/help'):
                 # Send help message
-                await bot_application.bot.send_message(
-                    chat_id=chat_id,
-                    text="I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n"
-                         "📧 *Email*: Check inbox, send emails, search for messages\n"
-                         "📅 *Calendar*: View schedule, create events, find free time\n"
-                         "📁 *Drive*: Manage documents, create files, share content\n"
-                         "🧠 *Memory*: Remember information and recall it later\n"
-                         "📄 *Document*: Process, summarize, and file documents\n\n"
-                         "You can navigate using the keyboard menu or simply tell me what you need help with!"
-                )
+                try:
+                    bot_application.bot.send_message(
+                        chat_id=chat_id,
+                        text="I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n"
+                             "📧 *Email*: Check inbox, send emails, search for messages\n"
+                             "📅 *Calendar*: View schedule, create events, find free time\n"
+                             "📁 *Drive*: Manage documents, create files, share content\n"
+                             "🧠 *Memory*: Remember information and recall it later\n"
+                             "📄 *Document*: Process, summarize, and file documents\n\n"
+                             "You can navigate using the keyboard menu or simply tell me what you need help with!"
+                    )
+                except Exception as e:
+                    logger.error(f"Error sending help message: {e}")
+                    # Fallback to a direct HTTP request
+                    try:
+                        import requests
+                        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+                        requests.post(
+                            f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                            json={"chat_id": chat_id, "text": "I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n📧 Email: Check inbox, send emails, search for messages\n📅 Calendar: View schedule, create events, find free time\n📁 Drive: Manage documents, create files, share content\n🧠 Memory: Remember information and recall it later\n📄 Document: Process, summarize, and file documents\n\nYou can navigate using the keyboard menu or simply tell me what you need help with!"}
+                        )
+                    except Exception as http_error:
+                        logger.error(f"Failed fallback request: {http_error}")
         else:
             # Check if this could be a user ID for account linking
             from models import User
@@ -553,11 +592,24 @@ async def process_update(update_data):
                         from app import db
                         db.session.commit()
                         
-                        await bot_application.bot.send_message(
-                            chat_id=chat_id,
-                            text=f"Account linked successfully! Welcome, {user.username}!\n\n"
-                                 "You can now use your assistant through Telegram. How can I help you today?"
-                        )
+                        try:
+                            bot_application.bot.send_message(
+                                chat_id=chat_id,
+                                text=f"Account linked successfully! Welcome, {user.username}!\n\n"
+                                     "You can now use your assistant through Telegram. How can I help you today?"
+                            )
+                        except Exception as e:
+                            logger.error(f"Error sending account linked message: {e}")
+                            # Fallback to a direct HTTP request
+                            try:
+                                import requests
+                                telegram_token = os.environ.get("TELEGRAM_TOKEN")
+                                requests.post(
+                                    f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                                    json={"chat_id": chat_id, "text": f"Account linked successfully! Welcome, {user.username}!\n\nYou can now use your assistant through Telegram. How can I help you today?"}
+                                )
+                            except Exception as http_error:
+                                logger.error(f"Failed fallback request: {http_error}")
                         return True
                 except ValueError:
                     # Not a user ID, just a regular message
@@ -570,15 +622,42 @@ async def process_update(update_data):
                 # Process with OpenManus
                 response = manus_process(db_user, text, None)
                 
-                await bot_application.bot.send_message(
-                    chat_id=chat_id,
-                    text=response
-                )
+                # Use the regular sendMessage method instead of async to avoid event loop issues
+                try:
+                    bot_application.bot.send_message(
+                        chat_id=chat_id,
+                        text=response
+                    )
+                except Exception as send_error:
+                    logger.error(f"Error sending message: {send_error}")
+                    # Fallback to a direct HTTP request if needed
+                    try:
+                        import requests
+                        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+                        requests.post(
+                            f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                            json={"chat_id": chat_id, "text": response}
+                        )
+                    except Exception as http_error:
+                        logger.error(f"Failed fallback request: {http_error}")
             else:
-                await bot_application.bot.send_message(
-                    chat_id=chat_id,
-                    text="I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
-                )
+                try:
+                    bot_application.bot.send_message(
+                        chat_id=chat_id,
+                        text="I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
+                    )
+                except Exception as send_error:
+                    logger.error(f"Error sending message: {send_error}")
+                    # Fallback to a direct HTTP request if needed
+                    try:
+                        import requests
+                        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+                        requests.post(
+                            f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                            json={"chat_id": chat_id, "text": "I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."}
+                        )
+                    except Exception as http_error:
+                        logger.error(f"Failed fallback request: {http_error}")
         
         return True
     except Exception as e:
