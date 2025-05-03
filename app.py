@@ -174,6 +174,7 @@ def logout():
 @login_required
 def dashboard():
     from models import MemoryEntry, Document
+    from config import ENVIRONMENT, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ACTIVE_BOT_TOKEN, IS_DEPLOYED
     
     # Get memory and document counts
     memory_count = MemoryEntry.query.filter_by(user_id=current_user.id).count()
@@ -182,11 +183,21 @@ def dashboard():
     # Get the Replit domain for Google OAuth redirect URI
     replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
     
+    # Determine which token is being used
+    token_info = {
+        'environment': ENVIRONMENT,
+        'is_deployed': IS_DEPLOYED,
+        'using_production_token': ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION,
+        'has_production_token': bool(BOT_TOKEN_PRODUCTION),
+        'has_development_token': bool(BOT_TOKEN_DEVELOPMENT)
+    }
+    
     return render_template(
         'dashboard.html', 
         memory_count=memory_count, 
         document_count=document_count,
-        replit_domain=replit_domain
+        replit_domain=replit_domain,
+        token_info=token_info
     )
 
 @app.route('/start_bot', methods=['POST'])
@@ -256,6 +267,7 @@ def try_login():
 def dashboard_direct():
     """A version of the dashboard without the @login_required decorator for testing"""
     from models import MemoryEntry, Document, User
+    from config import ENVIRONMENT, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ACTIVE_BOT_TOKEN, IS_DEPLOYED
     
     try:
         # Get the first user for testing
@@ -271,6 +283,15 @@ def dashboard_direct():
         # Get the Replit domain for Google OAuth redirect URI
         replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
         
+        # Determine which token is being used
+        token_info = {
+            'environment': ENVIRONMENT,
+            'is_deployed': IS_DEPLOYED,
+            'using_production_token': ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION,
+            'has_production_token': bool(BOT_TOKEN_PRODUCTION),
+            'has_development_token': bool(BOT_TOKEN_DEVELOPMENT)
+        }
+        
         # Set a flag to indicate this is a direct access (bypass login check)
         is_direct_access = True
         
@@ -279,6 +300,7 @@ def dashboard_direct():
             memory_count=memory_count, 
             document_count=document_count,
             replit_domain=replit_domain,
+            token_info=token_info,
             is_direct_access=is_direct_access,
             current_user=user  # Pass the user directly
         )
