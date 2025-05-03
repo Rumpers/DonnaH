@@ -2,6 +2,9 @@ import os
 import logging
 import threading
 import asyncio
+import requests
+import base64
+import io
 from datetime import datetime
 import google_services
 import memory_system
@@ -277,10 +280,44 @@ async def handle_help(update: Update, context: CallbackContext) -> int:
 
 async def process_message(update: Update, context: CallbackContext) -> int:
     """Process user messages using OpenManus framework."""
-    user_message = update.message.text
     user = update.effective_user
     telegram_id = str(user.id)
-
+    
+    # Check if this is a photo message
+    if hasattr(update.message, 'photo') and update.message.photo:
+        logger.info("Processing photo message from conversation handler")
+        chat_id = update.message.chat_id
+        
+        # Check if user exists in database
+        from models import User
+        db_user = User.query.filter_by(telegram_id=telegram_id).first()
+        
+        if not db_user:
+            await update.message.reply_text(
+                "I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
+            )
+            return MAIN_MENU
+        
+        try:
+            # Get the largest photo (best quality)
+            photo = update.message.photo[-1]
+            file_id = photo.file_id
+            
+            # Get file from Telegram
+            file = await context.bot.get_file(file_id)
+            file_path = file.file_path
+            
+            # Process photo
+            await process_photo(context.bot, db_user, file_path, chat_id)
+            return MAIN_MENU
+        except Exception as e:
+            logger.error(f"Error processing photo in conversation handler: {e}")
+            await update.message.reply_text(f"I encountered an error processing your photo: {str(e)}")
+            return MAIN_MENU
+    
+    # For text messages, proceed as usual
+    user_message = update.message.text
+    
     # Check if we're waiting for a user ID for account linking
     if 'awaiting_user_id' in context.user_data and context.user_data['awaiting_user_id']:
         try:
@@ -386,6 +423,176 @@ async def process_message(update: Update, context: CallbackContext) -> int:
         await update.message.reply_text(f"I encountered an error processing your request: {str(e)}")
         return MAIN_MENU
 
+async def process_photo(bot, user, file_path, chat_id):
+    """
+    Process a photo message and extract information if it's a business card.
+    
+    Args:
+        bot: The Telegram bot instance
+        user: The database user
+        file_path: Path to the Telegram file
+        chat_id: The chat ID for sending responses
+    
+    Returns:
+        True if processing was successful, False otherwise
+    """
+    try:
+        logger.info(f"Processing photo at {file_path}")
+        
+        # Grab the image from Telegram's servers
+        image_url = f"https://api.telegram.org/file/bot{ACTIVE_BOT_TOKEN}/{file_path}"
+        response = requests.get(image_url)
+        
+        if response.status_code != 200:
+            logger.error(f"Failed to download image: HTTP {response.status_code}")
+            await bot.send_message(
+                chat_id=chat_id,
+                text="I couldn't download the image. Please try again later."
+            )
+            return False
+        
+        # Convert to base64
+        image_bytes = response.content
+        base64_image = base64.b64encode(image_bytes).decode('utf-8')
+        
+        # Use OpenAI's vision capabilities to analyze the image
+        from openai import OpenAI
+        client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        
+        # Create conversation with image
+        logger.info("Sending image to OpenAI for analysis")
+        response = client.chat.completions.create(
+            model="gpt-4o",
+            messages=[
+                {
+                    "role": "system", 
+                    "content": "You are an AI assistant that specializes in analyzing images of business cards. " 
+                              "When you see a business card, extract all the information from it including: " 
+                              "name, title, company, phone number, email, website, address, and any other " 
+                              "relevant details. Format the response as JSON with these fields. " 
+                              "If the image is not a business card, reply with a JSON object with a single field " 
+                              "'is_business_card': false and 'description' field explaining what the image shows."
+                },
+                {
+                    "role": "user",
+                    "content": [
+                        {"type": "text", "text": "Analyze this image and tell me if it's a business card. If it is, extract all the information from it."},
+                        {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{base64_image}"}}
+                    ],
+                }
+            ],
+            max_tokens=1000,
+            response_format={"type": "json_object"},
+        )
+        
+        analysis_result = response.choices[0].message.content
+        logger.info(f"Image analysis complete: {analysis_result}")
+        
+        # Parse the JSON response
+        import json
+        card_data = json.loads(analysis_result)
+        
+        # Create a new conversation if one doesn't exist
+        if not hasattr(user, 'conversation_id'):
+            conversation = Conversation(user_id=user.id)
+            db.session.add(conversation)
+            db.session.commit()
+            conversation_id = conversation.id
+        else:
+            conversation_id = user.conversation_id
+        
+        # Save the image message to the database
+        image_message = Message(
+            conversation_id=conversation_id,
+            content="[User sent an image]",
+            is_user=True
+        )
+        db.session.add(image_message)
+        db.session.commit()
+        
+        # Check if it's a business card
+        if card_data.get('is_business_card', True):
+            # Format a nice response with the extracted information
+            card_info = []
+            if 'name' in card_data:
+                card_info.append(f"👤 *Name*: {card_data['name']}")
+            if 'title' in card_data:
+                card_info.append(f"📋 *Title*: {card_data['title']}")
+            if 'company' in card_data:
+                card_info.append(f"🏢 *Company*: {card_data['company']}")
+            if 'phone' in card_data:
+                card_info.append(f"📱 *Phone*: {card_data['phone']}")
+            if 'email' in card_data:
+                card_info.append(f"📧 *Email*: {card_data['email']}")
+            if 'website' in card_data:
+                card_info.append(f"🌐 *Website*: {card_data['website']}")
+            if 'address' in card_data:
+                card_info.append(f"📍 *Address*: {card_data['address']}")
+            
+            # Extra fields that might be present
+            for key, value in card_data.items():
+                if key not in ['name', 'title', 'company', 'phone', 'email', 'website', 'address', 'is_business_card'] and value:
+                    card_info.append(f"ℹ️ *{key.capitalize()}*: {value}")
+            
+            # Create the full response message
+            if card_info:
+                response_text = "I've identified this as a business card and extracted the following information:\n\n" + "\n".join(card_info) + "\n\nHow do you know this person? Would you like me to save this contact to your memory?"
+            else:
+                response_text = "This appears to be a business card, but I couldn't extract specific details. Could you please provide more information about this contact?"
+            
+            # Save to memory system if clearly a business card
+            memory_title = card_data.get('name', 'Unknown Contact')
+            memory_content = json.dumps(card_data)
+            memory_entry = memory_system.add_memory(user, 'contact', memory_title, memory_content)
+            
+            # Send response
+            await bot.send_message(
+                chat_id=chat_id,
+                text=response_text,
+                parse_mode="Markdown"
+            )
+            
+            # Save bot response to the database
+            bot_message = Message(
+                conversation_id=conversation_id,
+                content=response_text,
+                is_user=False
+            )
+            db.session.add(bot_message)
+            db.session.commit()
+            
+            return True
+        else:
+            # Not a business card
+            description = card_data.get('description', 'an image that is not a business card')
+            response_text = f"This doesn't appear to be a business card. It looks like {description}. How can I help you with this image?"
+            
+            await bot.send_message(
+                chat_id=chat_id,
+                text=response_text
+            )
+            
+            # Save bot response to the database
+            bot_message = Message(
+                conversation_id=conversation_id,
+                content=response_text,
+                is_user=False
+            )
+            db.session.add(bot_message)
+            db.session.commit()
+            
+            return True
+    except Exception as e:
+        logger.error(f"Error processing photo: {e}")
+        try:
+            await bot.send_message(
+                chat_id=chat_id,
+                text=f"I encountered an error processing your image: {str(e)}"
+            )
+        except Exception as send_error:
+            logger.error(f"Error sending error message: {send_error}")
+        return False
+
 async def cancel(update: Update, context: CallbackContext) -> int:
     """Cancel the conversation."""
     user = update.effective_user
@@ -437,15 +644,19 @@ def initialize_bot(token, webhook_url=None):
                     MessageHandler(filters.Regex('^📅 Calendar$'), handle_calendar),
                     MessageHandler(filters.Regex('^🧠 Memory$'), handle_memory),
                     MessageHandler(filters.Regex('^❓ Help$'), handle_help),
+                    MessageHandler(filters.PHOTO, process_message),  # Added to handle photos
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
                 EMAIL: [
+                    MessageHandler(filters.PHOTO, process_message),  # Added to handle photos
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
                 CALENDAR: [
+                    MessageHandler(filters.PHOTO, process_message),  # Added to handle photos
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
                 MEMORY: [
+                    MessageHandler(filters.PHOTO, process_message),  # Added to handle photos
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
             },
@@ -481,10 +692,61 @@ def process_update(update_data):
             logger.info("Received a non-message update, ignoring")
             return True
 
-        # Check if message has text (could be a photo, document, etc.)
+        # Check if message has text or photo
         if not hasattr(update.message, 'text') or update.message.text is None:
-            logger.info("Received a message without text, ignoring")
-            return True
+            # Check if message has photo
+            if hasattr(update.message, 'photo') and update.message.photo:
+                # Handle photo message
+                chat_id = update.message.chat_id
+                user_id = update.message.from_user.id
+                telegram_id = str(user_id)
+                
+                # Check if user exists in database
+                from models import User
+                db_user = User.query.filter_by(telegram_id=telegram_id).first()
+                
+                if not db_user:
+                    try:
+                        bot_application.bot.send_message(
+                            chat_id=chat_id,
+                            text="I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
+                        )
+                    except Exception as e:
+                        logger.error(f"Error sending message: {e}")
+                    return True
+                
+                # Process the photo message
+                try:
+                    logger.info("Processing photo message")
+                    # Get the largest photo (best quality)
+                    photo = update.message.photo[-1]
+                    file_id = photo.file_id
+                    
+                    # Get file from Telegram
+                    file = bot_application.bot.get_file(file_id)
+                    file_path = file.file_path
+                    
+                    # Process photo asynchronously
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    response = loop.run_until_complete(process_photo(bot_application.bot, db_user, file_path, chat_id))
+                    loop.close()
+                    
+                    return True
+                except Exception as e:
+                    logger.error(f"Error processing photo: {e}")
+                    try:
+                        bot_application.bot.send_message(
+                            chat_id=chat_id,
+                            text=f"I encountered an error processing your photo: {str(e)}"
+                        )
+                    except Exception as send_error:
+                        logger.error(f"Error sending error message: {send_error}")
+                    return True
+            else:
+                logger.info("Received a message without text or photo, ignoring")
+                return True
 
         # Handle the update manually instead of using process_update
         # This avoids the "Application not initialized" error
