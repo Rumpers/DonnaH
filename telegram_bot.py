@@ -707,10 +707,14 @@ def process_update(update_data):
                 
                 if not db_user:
                     try:
-                        bot_application.bot.send_message(
+                        import asyncio
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(bot_application.bot.send_message(
                             chat_id=chat_id,
                             text="I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
-                        )
+                        ))
+                        loop.close()
                     except Exception as e:
                         logger.error(f"Error sending message: {e}")
                     return True
@@ -722,8 +726,11 @@ def process_update(update_data):
                     photo = update.message.photo[-1]
                     file_id = photo.file_id
                     
-                    # Get file from Telegram
-                    file = bot_application.bot.get_file(file_id)
+                    # Get file from Telegram - need to await the coroutine
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    file = loop.run_until_complete(bot_application.bot.get_file(file_id))
                     file_path = file.file_path
                     
                     # Process photo asynchronously
@@ -737,10 +744,14 @@ def process_update(update_data):
                 except Exception as e:
                     logger.error(f"Error processing photo: {e}")
                     try:
-                        bot_application.bot.send_message(
+                        import asyncio
+                        loop = asyncio.new_event_loop()
+                        asyncio.set_event_loop(loop)
+                        loop.run_until_complete(bot_application.bot.send_message(
                             chat_id=chat_id,
                             text=f"I encountered an error processing your photo: {str(e)}"
-                        )
+                        ))
+                        loop.close()
                     except Exception as send_error:
                         logger.error(f"Error sending error message: {send_error}")
                     return True
