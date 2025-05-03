@@ -1032,9 +1032,12 @@ def process_update(update_data):
                         logger.error(f"Failed fallback request: {http_error}")
             else:
                 try:
-                    bot_application.bot.send_message(
-                        chat_id=chat_id,
-                        text="I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
+                    loop_manager = EventLoopManager()
+                    loop_manager.run_coroutine(
+                        bot_application.bot.send_message(
+                            chat_id=chat_id,
+                            text="I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
+                        )
                     )
                 except Exception as send_error:
                     logger.error(f"Error sending message: {send_error}")
