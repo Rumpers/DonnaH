@@ -358,12 +358,20 @@ def setup_telegram_webhook():
     """Set up the Telegram webhook."""
     try:
         # Use the active bot token from config
-        from config import ACTIVE_BOT_TOKEN
+        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_DONNAH, BOT_TOKEN_NOENA, BOT_TOKEN
         replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
         
         if not ACTIVE_BOT_TOKEN:
             flash('Telegram bot token not configured. Cannot set up webhook.', 'danger')
             return redirect(url_for('dashboard'))
+            
+        # Log which token is being used
+        if ACTIVE_BOT_TOKEN == BOT_TOKEN_DONNAH:
+            logger.info("Using TELEGRAM_BOT_TOKEN_DonnaH for webhook setup")
+        elif ACTIVE_BOT_TOKEN == BOT_TOKEN_NOENA:
+            logger.info("Using TELEGRAM_BOT_TOKEN_Noena for webhook setup")
+        elif ACTIVE_BOT_TOKEN == BOT_TOKEN:
+            logger.info("Using TELEGRAM_TOKEN for webhook setup")
             
         if not replit_domain:
             flash('Replit domain not available. Cannot set up webhook.', 'danger')
@@ -395,11 +403,19 @@ def remove_telegram_webhook():
     """Remove the Telegram webhook."""
     try:
         # Use the active bot token from config
-        from config import ACTIVE_BOT_TOKEN
+        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_DONNAH, BOT_TOKEN_NOENA, BOT_TOKEN
         
         if not ACTIVE_BOT_TOKEN:
             flash('Telegram bot token not configured. Cannot remove webhook.', 'danger')
             return redirect(url_for('dashboard'))
+            
+        # Log which token is being used
+        if ACTIVE_BOT_TOKEN == BOT_TOKEN_DONNAH:
+            logger.info("Using TELEGRAM_BOT_TOKEN_DonnaH for webhook removal")
+        elif ACTIVE_BOT_TOKEN == BOT_TOKEN_NOENA:
+            logger.info("Using TELEGRAM_BOT_TOKEN_Noena for webhook removal")
+        elif ACTIVE_BOT_TOKEN == BOT_TOKEN:
+            logger.info("Using TELEGRAM_TOKEN for webhook removal")
             
         # Initialize bot if not already initialized
         is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN)
