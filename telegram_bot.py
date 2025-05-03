@@ -44,6 +44,14 @@ logger = logging.getLogger(__name__)
 # Import ACTIVE_BOT_TOKEN from config
 from config import ACTIVE_BOT_TOKEN
 
+# Define conversation states
+MAIN_MENU = 0
+EMAIL = 1
+CALENDAR = 2
+DRIVE = 3
+MEMORY = 4
+DOCUMENT = 5
+
 # Bot instance
 bot_application = None
 
@@ -77,8 +85,7 @@ async def start(update: Update, context: CallbackContext) -> int:
 
     keyboard = [
         ['📧 Email', '📅 Calendar'],
-        ['📁 Drive', '🧠 Memory'],
-        ['📄 Document', '❓ Help']
+        ['🧠 Memory', '❓ Help']
     ]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
@@ -240,9 +247,7 @@ async def handle_help(update: Update, context: CallbackContext) -> int:
         "I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n"
         "📧 *Email*: Check inbox, send emails, search for messages\n"
         "📅 *Calendar*: View schedule, create events, find free time\n"
-        "📁 *Drive*: Manage documents, create files, share content\n"
-        "🧠 *Memory*: Remember information and recall it later\n"
-        "📄 *Document*: Process, summarize, and file documents\n\n"
+        "🧠 *Memory*: Remember information and recall it later\n\n"
         "You can navigate using the keyboard menu or simply tell me what you need help with!"
     )
 
@@ -258,8 +263,7 @@ async def handle_help(update: Update, context: CallbackContext) -> int:
 
     keyboard = [
         ['📧 Email', '📅 Calendar'],
-        ['📁 Drive', '🧠 Memory'],
-        ['📄 Document', '❓ Help']
+        ['🧠 Memory', '❓ Help']
     ]
 
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
@@ -305,8 +309,7 @@ async def process_message(update: Update, context: CallbackContext) -> int:
 
                 keyboard = [
                     ['📧 Email', '📅 Calendar'],
-                    ['📁 Drive', '🧠 Memory'],
-                    ['📄 Document', '❓ Help']
+                    ['🧠 Memory', '❓ Help']
                 ]
 
                 reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
@@ -432,9 +435,7 @@ def initialize_bot(token, webhook_url=None):
                 MAIN_MENU: [
                     MessageHandler(filters.Regex('^📧 Email$'), handle_email),
                     MessageHandler(filters.Regex('^📅 Calendar$'), handle_calendar),
-                    MessageHandler(filters.Regex('^📁 Drive$'), handle_drive),
                     MessageHandler(filters.Regex('^🧠 Memory$'), handle_memory),
-                    MessageHandler(filters.Regex('^📄 Document$'), handle_document),
                     MessageHandler(filters.Regex('^❓ Help$'), handle_help),
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
@@ -444,13 +445,7 @@ def initialize_bot(token, webhook_url=None):
                 CALENDAR: [
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
-                DRIVE: [
-                    MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
-                ],
                 MEMORY: [
-                    MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
-                ],
-                DOCUMENT: [
                     MessageHandler(filters.TEXT & ~filters.COMMAND, process_message),
                 ],
             },
@@ -556,9 +551,7 @@ def process_update(update_data):
                         text="I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n"
                              "📧 *Email*: Check inbox, send emails, search for messages\n"
                              "📅 *Calendar*: View schedule, create events, find free time\n"
-                             "📁 *Drive*: Manage documents, create files, share content\n"
-                             "🧠 *Memory*: Remember information and recall it later\n"
-                             "📄 *Document*: Process, summarize, and file documents\n\n"
+                             "🧠 *Memory*: Remember information and recall it later\n\n"
                              "You can navigate using the keyboard menu or simply tell me what you need help with!"
                     )
                 except Exception as e:
@@ -569,7 +562,7 @@ def process_update(update_data):
                         telegram_token = os.environ.get("TELEGRAM_TOKEN")
                         requests.post(
                             f"https://api.telegram.org/bot{telegram_token}/sendMessage",
-                            json={"chat_id": chat_id, "text": "I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n📧 Email: Check inbox, send emails, search for messages\n📅 Calendar: View schedule, create events, find free time\n📁 Drive: Manage documents, create files, share content\n🧠 Memory: Remember information and recall it later\n📄 Document: Process, summarize, and file documents\n\nYou can navigate using the keyboard menu or simply tell me what you need help with!"}
+                            json={"chat_id": chat_id, "text": "I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n📧 Email: Check inbox, send emails, search for messages\n📅 Calendar: View schedule, create events, find free time\n🧠 Memory: Remember information and recall it later\n\nYou can navigate using the keyboard menu or simply tell me what you need help with!"}
                         )
                     except Exception as http_error:
                         logger.error(f"Failed fallback request: {http_error}")
