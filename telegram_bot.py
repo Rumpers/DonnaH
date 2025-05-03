@@ -467,8 +467,13 @@ async def process_photo(bot, user, file_path, chat_id):
     try:
         logger.info(f"Processing photo at {file_path}")
         
-        # Grab the image from Telegram's servers
-        image_url = f"https://api.telegram.org/file/bot{ACTIVE_BOT_TOKEN}/{file_path}"
+        # Grab the image from Telegram's servers - check if the file_path already has the full URL
+        if file_path.startswith("http"):
+            image_url = file_path
+        else:
+            image_url = f"https://api.telegram.org/file/bot{ACTIVE_BOT_TOKEN}/{file_path}"
+            
+        logger.info(f"Downloading image from URL: {image_url}")
         response = requests.get(image_url)
         
         if response.status_code != 200:
