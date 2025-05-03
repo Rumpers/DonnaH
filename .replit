@@ -2,7 +2,7 @@ modules = ["python-3.11", "postgresql-16"]
 
 [nix]
 channel = "stable-24_05"
-packages = ["bash", "libxcrypt", "libyaml", "openssl", "postgresql"]
+packages = ["bash", "freetype", "lcms2", "libimagequant", "libjpeg", "libtiff", "libwebp", "libxcrypt", "libyaml", "openjpeg", "openssl", "postgresql", "tcl", "tk", "zlib"]
 
 [env]
 REPLIT_DISABLE_PACKAGE_LAYER = "1"

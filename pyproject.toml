@@ -26,6 +26,8 @@ dependencies = [
     "pydantic>=2.11.3",
     "oauthlib>=3.2.2",
     "flask-wtf>=1.2.1",
+    "trafilatura>=2.0.0",
+    "pillow>=11.2.1",
 ]
 
 [[tool.uv.index]]

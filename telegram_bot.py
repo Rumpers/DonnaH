@@ -5,6 +5,14 @@ import asyncio
 import requests
 import base64
 import io
+import json
+from datetime import datetime
+from app import db
+from models import User, Conversation, Message, MemoryEntry, FaceImage
+import memory_system
+from config import ACTIVE_BOT_TOKEN, ENVIRONMENT
+import manus_integration
+import face_profile_finder
 
 # Create a singleton event loop manager
 class EventLoopManager:
@@ -31,13 +39,10 @@ class EventLoopManager:
         if self._loop and not self._loop.is_closed():
             self._loop.close()
             self._loop = None
-from datetime import datetime
+# These imports are already handled at the top of the file
+# Keep these next imports to maintain compatibility with the import error checking
 import google_services
-import memory_system
 import document_processor
-import manus_integration
-from models import User, Conversation, Message
-from app import db
 
 # Try to import Telegram packages, but provide fallbacks if not available
 # This allows development and testing without the telegram package
@@ -70,8 +75,7 @@ except ImportError:
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
-# Import ACTIVE_BOT_TOKEN from config
-from config import ACTIVE_BOT_TOKEN
+# Bot token is already imported at the top of the file
 
 # Define conversation states
 MAIN_MENU = 0

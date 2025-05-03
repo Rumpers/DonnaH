@@ -54,8 +54,24 @@ class MemoryEntry(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
+    # Relationships
+    face_images = db.relationship('FaceImage', backref='memory_entry', lazy='dynamic')
+    
     def __repr__(self):
         return f'<MemoryEntry {self.id}: {self.title}>'
+
+class FaceImage(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    memory_entry_id = db.Column(db.Integer, db.ForeignKey('memory_entry.id'), nullable=False)
+    image_path = db.Column(db.String(512))  # Path to stored image
+    image_url = db.Column(db.String(512))   # URL if from web search
+    is_profile = db.Column(db.Boolean, default=False)  # True if primary profile image
+    face_encoding = db.Column(db.Text)  # Facial feature encoding for recognition
+    source = db.Column(db.String(64))  # 'upload', 'business_card', 'web_search'
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<FaceImage {self.id} for {self.memory_entry_id}>'
 
 class Document(db.Model):
     id = db.Column(db.Integer, primary_key=True)
