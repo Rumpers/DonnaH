@@ -436,6 +436,8 @@ async def process_photo(bot, user, file_path, chat_id):
     Returns:
         True if processing was successful, False otherwise
     """
+    global ACTIVE_BOT_TOKEN
+    logger.info(f"Starting to process photo from {file_path} for chat {chat_id}")
     try:
         logger.info(f"Processing photo at {file_path}")
         
@@ -450,6 +452,8 @@ async def process_photo(bot, user, file_path, chat_id):
                 text="I couldn't download the image. Please try again later."
             )
             return False
+            
+        logger.info("Successfully downloaded image from Telegram servers")
         
         # Convert to base64
         image_bytes = response.content
@@ -726,19 +730,21 @@ def process_update(update_data):
                     photo = update.message.photo[-1]
                     file_id = photo.file_id
                     
-                    # Get file from Telegram - need to await the coroutine
+                    # Create a single event loop for all async operations
                     import asyncio
                     loop = asyncio.new_event_loop()
                     asyncio.set_event_loop(loop)
-                    file = loop.run_until_complete(bot_application.bot.get_file(file_id))
-                    file_path = file.file_path
                     
-                    # Process photo asynchronously
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    response = loop.run_until_complete(process_photo(bot_application.bot, db_user, file_path, chat_id))
-                    loop.close()
+                    try:
+                        # Get file from Telegram
+                        file = loop.run_until_complete(bot_application.bot.get_file(file_id))
+                        file_path = file.file_path
+                        
+                        # Process photo using the same loop
+                        response = loop.run_until_complete(process_photo(bot_application.bot, db_user, file_path, chat_id))
+                    finally:
+                        # Only close the loop after all async operations are done
+                        loop.close()
                     
                     return True
                 except Exception as e:
