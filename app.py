@@ -307,15 +307,10 @@ with app.app_context():
         
         # Check if Telegram token is available and register the bot
         # Import the active bot token from config
-        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_DONNAH, BOT_TOKEN_NOENA, BOT_TOKEN
+        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ENVIRONMENT
         if ACTIVE_BOT_TOKEN:
-            # Log which token is being used
-            if ACTIVE_BOT_TOKEN == BOT_TOKEN_DONNAH:
-                logger.info("Using TELEGRAM_BOT_TOKEN_DonnaH for bot initialization")
-            elif ACTIVE_BOT_TOKEN == BOT_TOKEN_NOENA:
-                logger.info("Using TELEGRAM_BOT_TOKEN_Noena for bot initialization")
-            elif ACTIVE_BOT_TOKEN == BOT_TOKEN:
-                logger.info("Using TELEGRAM_TOKEN for bot initialization")
+            # Log which token and environment are being used
+            logger.info(f"Using {'Production' if ENVIRONMENT == 'production' else 'Development'} bot for initialization")
                 
             try:
                 # Just register the bot without trying to start polling
@@ -358,20 +353,15 @@ def setup_telegram_webhook():
     """Set up the Telegram webhook."""
     try:
         # Use the active bot token from config
-        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_DONNAH, BOT_TOKEN_NOENA, BOT_TOKEN
+        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ENVIRONMENT
         replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
         
         if not ACTIVE_BOT_TOKEN:
             flash('Telegram bot token not configured. Cannot set up webhook.', 'danger')
             return redirect(url_for('dashboard'))
             
-        # Log which token is being used
-        if ACTIVE_BOT_TOKEN == BOT_TOKEN_DONNAH:
-            logger.info("Using TELEGRAM_BOT_TOKEN_DonnaH for webhook setup")
-        elif ACTIVE_BOT_TOKEN == BOT_TOKEN_NOENA:
-            logger.info("Using TELEGRAM_BOT_TOKEN_Noena for webhook setup")
-        elif ACTIVE_BOT_TOKEN == BOT_TOKEN:
-            logger.info("Using TELEGRAM_TOKEN for webhook setup")
+        # Log which token and environment are being used
+        logger.info(f"Using {'Production' if ENVIRONMENT == 'production' else 'Development'} bot for webhook setup")
             
         if not replit_domain:
             flash('Replit domain not available. Cannot set up webhook.', 'danger')
@@ -403,19 +393,14 @@ def remove_telegram_webhook():
     """Remove the Telegram webhook."""
     try:
         # Use the active bot token from config
-        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_DONNAH, BOT_TOKEN_NOENA, BOT_TOKEN
+        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ENVIRONMENT
         
         if not ACTIVE_BOT_TOKEN:
             flash('Telegram bot token not configured. Cannot remove webhook.', 'danger')
             return redirect(url_for('dashboard'))
             
-        # Log which token is being used
-        if ACTIVE_BOT_TOKEN == BOT_TOKEN_DONNAH:
-            logger.info("Using TELEGRAM_BOT_TOKEN_DonnaH for webhook removal")
-        elif ACTIVE_BOT_TOKEN == BOT_TOKEN_NOENA:
-            logger.info("Using TELEGRAM_BOT_TOKEN_Noena for webhook removal")
-        elif ACTIVE_BOT_TOKEN == BOT_TOKEN:
-            logger.info("Using TELEGRAM_TOKEN for webhook removal")
+        # Log which token and environment are being used
+        logger.info(f"Using {'Production' if ENVIRONMENT == 'production' else 'Development'} bot for webhook removal")
             
         # Initialize bot if not already initialized
         is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN)

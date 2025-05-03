@@ -6,14 +6,15 @@ logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 # Bot configuration
-# Support multiple bot tokens for different environments
-BOT_TOKEN_DONNAH = os.environ.get("TELEGRAM_BOT_TOKEN_DonnaH")
-BOT_TOKEN_NOENA = os.environ.get("TELEGRAM_BOT_TOKEN_Noena")
-# For backward compatibility
-BOT_TOKEN = os.environ.get("TELEGRAM_TOKEN")
+# Support different environments with separate bot tokens
+BOT_TOKEN_PRODUCTION = os.environ.get("TELEGRAM_BOT_TOKEN_DONNAH")  # Production bot token
+BOT_TOKEN_DEVELOPMENT = os.environ.get("TELEGRAM_BOT_TOKEN_NOENA")  # Development bot token
 
-# Determine which token to use
-ACTIVE_BOT_TOKEN = BOT_TOKEN_DONNAH or BOT_TOKEN_NOENA or BOT_TOKEN
+# Determine which token to use - production has priority if both are set
+ACTIVE_BOT_TOKEN = BOT_TOKEN_PRODUCTION or BOT_TOKEN_DEVELOPMENT
+
+# Determine environment based on token
+ENVIRONMENT = "production" if ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION else "development"
 
 # Google API configuration
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
@@ -42,7 +43,7 @@ def check_env_vars():
     has_telegram_token = bool(ACTIVE_BOT_TOKEN)
     
     required_vars = {
-        "Bot Token (at least one of TELEGRAM_TOKEN, TELEGRAM_BOT_TOKEN_DonnaH, or TELEGRAM_BOT_TOKEN_Noena)": has_telegram_token,
+        "Bot Token (either TELEGRAM_BOT_TOKEN_DonnaH or TELEGRAM_BOT_TOKEN_Noena)": has_telegram_token,
         "GOOGLE_CLIENT_ID": GOOGLE_CLIENT_ID,
         "GOOGLE_CLIENT_SECRET": GOOGLE_CLIENT_SECRET,
         "MANUS_API_KEY": MANUS_API_KEY
@@ -54,13 +55,11 @@ def check_env_vars():
         logger.warning(f"Missing required environment variables: {', '.join(missing_vars)}")
         return False
     
-    # Log which bot token is being used
-    if BOT_TOKEN_DONNAH:
-        logger.info("Using TELEGRAM_BOT_TOKEN_DonnaH")
-    elif BOT_TOKEN_NOENA:
-        logger.info("Using TELEGRAM_BOT_TOKEN_Noena")
-    elif BOT_TOKEN:
-        logger.info("Using TELEGRAM_TOKEN")
+    # Log which token and environment are being used
+    if BOT_TOKEN_PRODUCTION:
+        logger.info(f"Using Production token (TELEGRAM_BOT_TOKEN_DonnaH) in {ENVIRONMENT} mode")
+    elif BOT_TOKEN_DEVELOPMENT:
+        logger.info(f"Using Development token (TELEGRAM_BOT_TOKEN_Noena) in {ENVIRONMENT} mode")
     else:
         logger.warning("No Telegram bot token configured")
     
