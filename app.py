@@ -465,3 +465,44 @@ def telegram_webhook():
     except Exception as e:
         logger.error(f"Error processing Telegram update: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
+        
+@app.route('/chat')
+@login_required
+def chat():
+    """
+    Web interface for chatting with OpenManus (donnah).
+    This provides a browser-based alternative to the Telegram bot.
+    """
+    return render_template('chat.html')
+
+@app.route('/process_chat', methods=['POST'])
+@login_required
+def process_chat():
+    """
+    Process chat messages from the web interface.
+    """
+    try:
+        message = request.json.get('message', '')
+        if not message:
+            return jsonify({"error": "No message provided"}), 400
+            
+        # Get current state from session or initialize new one
+        current_state = session.get('chat_state', {})
+        
+        # Use the same OpenManus processing as Telegram bot
+        from manus_integration import process_message
+        
+        # Process the message
+        response = process_message(current_user, message, current_state)
+        
+        # Update session with new state
+        session['chat_state'] = current_state
+        
+        # Return the response as JSON
+        return jsonify({
+            "response": response,
+            "timestamp": datetime.utcnow().isoformat()
+        })
+    except Exception as e:
+        logger.error(f"Error processing chat message: {str(e)}")
+        return jsonify({"error": str(e)}), 500
