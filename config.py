@@ -13,15 +13,15 @@ BOT_TOKEN_DEVELOPMENT = os.environ.get("TELEGRAM_BOT_TOKEN_NOENA")  # Developmen
 # Check if this is a deployed environment (not the Replit development server)
 IS_DEPLOYED = not os.environ.get("REPLIT_DEV_DOMAIN", "").endswith("janeway.replit.dev")
 
-# Force production token on deployed environment, otherwise use available token with production priority
+# Set environment and token based on deployment status
 if IS_DEPLOYED:
     # When deployed, ONLY use the production token
     ACTIVE_BOT_TOKEN = BOT_TOKEN_PRODUCTION
     ENVIRONMENT = "production"
 else:
-    # In development (Replit), use available token with production having priority
-    ACTIVE_BOT_TOKEN = BOT_TOKEN_PRODUCTION or BOT_TOKEN_DEVELOPMENT
-    ENVIRONMENT = "production" if ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION else "development"
+    # In development (Replit), use development token, production token is not allowed
+    ACTIVE_BOT_TOKEN = BOT_TOKEN_DEVELOPMENT
+    ENVIRONMENT = "development"
 
 # Log deployment status
 logger.info(f"Deployment status: {'DEPLOYED' if IS_DEPLOYED else 'DEVELOPMENT'}")
