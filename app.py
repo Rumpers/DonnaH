@@ -306,12 +306,21 @@ with app.app_context():
         initialize_memory_system()
         
         # Check if Telegram token is available and register the bot
-        telegram_token = os.environ.get("TELEGRAM_TOKEN")
-        if telegram_token:
+        # Import the active bot token from config
+        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_DONNAH, BOT_TOKEN_NOENA, BOT_TOKEN
+        if ACTIVE_BOT_TOKEN:
+            # Log which token is being used
+            if ACTIVE_BOT_TOKEN == BOT_TOKEN_DONNAH:
+                logger.info("Using TELEGRAM_BOT_TOKEN_DonnaH for bot initialization")
+            elif ACTIVE_BOT_TOKEN == BOT_TOKEN_NOENA:
+                logger.info("Using TELEGRAM_BOT_TOKEN_Noena for bot initialization")
+            elif ACTIVE_BOT_TOKEN == BOT_TOKEN:
+                logger.info("Using TELEGRAM_TOKEN for bot initialization")
+                
             try:
                 # Just register the bot without trying to start polling
                 # This will allow commands to work but won't actively fetch updates
-                is_registered = telegram_bot.initialize_bot(telegram_token)
+                is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN)
                 if is_registered:
                     logger.info("Telegram bot registered successfully at startup")
                     
