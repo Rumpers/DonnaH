@@ -467,13 +467,24 @@ async def process_photo(bot, user, file_path, chat_id):
     try:
         logger.info(f"Processing photo at {file_path}")
         
-        # Grab the image from Telegram's servers - check if the file_path already has the full URL
-        if file_path.startswith("http"):
-            image_url = file_path
-        else:
-            image_url = f"https://api.telegram.org/file/bot{ACTIVE_BOT_TOKEN}/{file_path}"
-            
-        logger.info(f"Downloading image from URL: {image_url}")
+        # Grab the image from Telegram's servers
+        # Always use the clean path approach without relying on the path format
+        # This ensures we don't have URL duplication issues
+        
+        # Check if file_path already contains the bot token (which means it's a full URL)
+        if ACTIVE_BOT_TOKEN in file_path:
+            logger.info("File path already contains bot token, extracting clean path")
+            # Extract just the path portion from the full URL
+            token_parts = file_path.split(ACTIVE_BOT_TOKEN)
+            if len(token_parts) > 1 and "/" in token_parts[1]:
+                # Get everything after the first slash following the token
+                clean_path = token_parts[1].split("/", 1)[1]
+                logger.info(f"Extracted clean path: {clean_path}")
+                file_path = clean_path
+        
+        # Now construct the URL with the clean path
+        image_url = f"https://api.telegram.org/file/bot{ACTIVE_BOT_TOKEN}/{file_path}"
+        logger.info(f"Final download URL: {image_url}")
         response = requests.get(image_url)
         
         if response.status_code != 200:
@@ -768,6 +779,21 @@ def process_update(update_data):
                         # Get file from Telegram
                         file = loop_manager.run_coroutine(bot_application.bot.get_file(file_id))
                         file_path = file.file_path
+                        
+                        # Log the raw file path for debugging
+                        logger.info(f"Original file_path from Telegram: {file_path}")
+                        
+                        # Ensure we're only using the relative path part, not a full URL
+                        if "https://api.telegram.org/file/bot" in file_path:
+                            # Extract just the path portion after the token
+                            parts = file_path.split("/file/bot")
+                            if len(parts) > 1:
+                                token_and_path = parts[1]
+                                # Extract just the path after the token
+                                path_parts = token_and_path.split("/", 1)
+                                if len(path_parts) > 1:
+                                    file_path = path_parts[1]
+                                    logger.info(f"Extracted file_path: {file_path}")
                         
                         # Process photo using the same loop
                         response = loop_manager.run_coroutine(
