@@ -72,6 +72,9 @@
                             <a href="#overview" class="list-group-item list-group-item-action active" data-bs-toggle="list">
                                 <i class="bi bi-speedometer2 me-2"></i> Overview
                             </a>
+                            <a href="{{ url_for('chat') }}" class="list-group-item list-group-item-action">
+                                <i class="bi bi-chat-dots me-2"></i> Web Chat
+                            </a>
                             <a href="#services" class="list-group-item list-group-item-action" data-bs-toggle="list">
                                 <i class="bi bi-gear me-2"></i> Connected Services
                             </a>
@@ -105,6 +108,15 @@
                                 <div class="alert alert-success mt-3">
                                     <i class="bi bi-check-circle-fill me-2"></i>
                                     <strong>AI-Powered Assistant Active:</strong> Your assistant is using real OpenAI language capabilities for enhanced understanding and responses.
+                                </div>
+                                
+                                <div class="text-center mt-3">
+                                    <a href="{{ url_for('chat') }}" class="btn btn-primary btn-lg">
+                                        <i class="bi bi-chat-dots me-2"></i> Chat with Donnah (OpenManus)
+                                    </a>
+                                    <p class="text-muted mt-2">
+                                        Access your AI assistant through our web interface
+                                    </p>
                                 </div>
                                 
                                 {% if token_info %}
