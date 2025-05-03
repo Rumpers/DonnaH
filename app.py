@@ -348,11 +348,12 @@ def inspect_users():
 def setup_telegram_webhook():
     """Set up the Telegram webhook."""
     try:
-        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+        # Use the active bot token from config
+        from config import ACTIVE_BOT_TOKEN
         replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
         
-        if not telegram_token:
-            flash('Telegram token not configured. Cannot set up webhook.', 'danger')
+        if not ACTIVE_BOT_TOKEN:
+            flash('Telegram bot token not configured. Cannot set up webhook.', 'danger')
             return redirect(url_for('dashboard'))
             
         if not replit_domain:
@@ -360,7 +361,7 @@ def setup_telegram_webhook():
             return redirect(url_for('dashboard'))
             
         # Initialize bot if not already initialized
-        is_registered = telegram_bot.initialize_bot(telegram_token)
+        is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN)
         if not is_registered:
             flash('Failed to initialize Telegram bot. Check logs for details.', 'danger')
             return redirect(url_for('dashboard'))
@@ -384,14 +385,15 @@ def setup_telegram_webhook():
 def remove_telegram_webhook():
     """Remove the Telegram webhook."""
     try:
-        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+        # Use the active bot token from config
+        from config import ACTIVE_BOT_TOKEN
         
-        if not telegram_token:
-            flash('Telegram token not configured. Cannot remove webhook.', 'danger')
+        if not ACTIVE_BOT_TOKEN:
+            flash('Telegram bot token not configured. Cannot remove webhook.', 'danger')
             return redirect(url_for('dashboard'))
             
         # Initialize bot if not already initialized
-        is_registered = telegram_bot.initialize_bot(telegram_token)
+        is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN)
         if not is_registered:
             flash('Failed to initialize Telegram bot. Check logs for details.', 'danger')
             return redirect(url_for('dashboard'))
