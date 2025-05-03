@@ -482,16 +482,64 @@ async def process_photo(bot, user, file_path, chat_id):
                 logger.info(f"Extracted clean path: {clean_path}")
                 file_path = clean_path
         
-        # Now construct the URL with the clean path
+        # According to Telegram Bot API docs, the correct file URL format is:
+        # https://api.telegram.org/file/bot<token>/<file_path>
+        # Let's make sure we're using that exact format
+        
+        # First, clean any tokens or API references from file_path if present
+        if "api.telegram.org" in file_path or "bot" in file_path:
+            logger.info("Cleaning file_path of API references")
+            # Extract just the path portion (likely photos/file_X.jpg)
+            parts = file_path.split("/")
+            # Look for the 'photos' directory in the path
+            for i, part in enumerate(parts):
+                if part == "photos" and i < len(parts) - 1:
+                    # Found the photos directory, use it and everything after
+                    file_path = "/".join(parts[i:])
+                    logger.info(f"Cleaned file_path to: {file_path}")
+                    break
+        
+        # Now construct the URL using the standard Telegram API format
         image_url = f"https://api.telegram.org/file/bot{ACTIVE_BOT_TOKEN}/{file_path}"
         logger.info(f"Final download URL: {image_url}")
-        response = requests.get(image_url)
         
-        if response.status_code != 200:
-            logger.error(f"Failed to download image: HTTP {response.status_code}")
+        # Add detailed logging - don't expose full token for security
+        if ACTIVE_BOT_TOKEN:
+            logger.info(f"ACTIVE_BOT_TOKEN (partial): {ACTIVE_BOT_TOKEN[:5]}...{ACTIVE_BOT_TOKEN[-5:]}")
+        else:
+            logger.error("ACTIVE_BOT_TOKEN is None or empty!")
+            
+        logger.info(f"file_path: {file_path}")
+        
+        try:
+            response = requests.get(image_url)
+            logger.info(f"Download response status code: {response.status_code}")
+            logger.info(f"Response headers: {response.headers}")
+            
+            if response.status_code != 200:
+                logger.error(f"Failed to download image: HTTP {response.status_code}")
+                logger.error(f"Response content: {response.content[:1000]}")
+                
+                # Try without the bot token as a fallback
+                fallback_url = f"https://api.telegram.org/file/{file_path}"
+                logger.info(f"Trying fallback URL: {fallback_url}")
+                fallback_response = requests.get(fallback_url)
+                
+                if fallback_response.status_code == 200:
+                    logger.info("Fallback URL worked!")
+                    response = fallback_response
+                else:
+                    await bot.send_message(
+                        chat_id=chat_id,
+                        text="I couldn't download the image. Please try again later."
+                    )
+                    return False
+            
+        except Exception as e:
+            logger.error(f"Exception during image download: {str(e)}")
             await bot.send_message(
                 chat_id=chat_id,
-                text="I couldn't download the image. Please try again later."
+                text=f"Error downloading image: {str(e)}"
             )
             return False
             
