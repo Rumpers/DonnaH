@@ -624,16 +624,20 @@ def process_update(update_data):
                 
                 # Use the regular sendMessage method instead of async to avoid event loop issues
                 try:
-                    bot_application.bot.send_message(
+                    import asyncio
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    loop.run_until_complete(bot_application.bot.send_message(
                         chat_id=chat_id,
                         text=response
-                    )
+                    ))
+                    loop.close()
                 except Exception as send_error:
                     logger.error(f"Error sending message: {send_error}")
                     # Fallback to a direct HTTP request if needed
                     try:
                         import requests
-                        telegram_token = os.environ.get("TELEGRAM_TOKEN")
+                        telegram_token = ACTIVE_BOT_TOKEN
                         requests.post(
                             f"https://api.telegram.org/bot{telegram_token}/sendMessage",
                             json={"chat_id": chat_id, "text": response}
