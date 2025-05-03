@@ -5,6 +5,32 @@ import asyncio
 import requests
 import base64
 import io
+
+# Create a singleton event loop manager
+class EventLoopManager:
+    _instance = None
+    _loop = None
+    
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(EventLoopManager, cls).__new__(cls)
+            cls._loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(cls._loop)
+        return cls._instance
+    
+    @property
+    def loop(self):
+        return self._loop
+    
+    def run_coroutine(self, coroutine):
+        """Run a coroutine in the managed event loop"""
+        return self._loop.run_until_complete(coroutine)
+        
+    def close(self):
+        """Close the event loop (only do this at application shutdown)"""
+        if self._loop and not self._loop.is_closed():
+            self._loop.close()
+            self._loop = None
 from datetime import datetime
 import google_services
 import memory_system
@@ -730,34 +756,40 @@ def process_update(update_data):
                     photo = update.message.photo[-1]
                     file_id = photo.file_id
                     
-                    # Create a single event loop for all async operations
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
+                    # Use the event loop manager for async operations
+                    loop_manager = EventLoopManager()
                     
                     try:
                         # Get file from Telegram
-                        file = loop.run_until_complete(bot_application.bot.get_file(file_id))
+                        file = loop_manager.run_coroutine(bot_application.bot.get_file(file_id))
                         file_path = file.file_path
                         
                         # Process photo using the same loop
-                        response = loop.run_until_complete(process_photo(bot_application.bot, db_user, file_path, chat_id))
-                    finally:
-                        # Only close the loop after all async operations are done
-                        loop.close()
+                        response = loop_manager.run_coroutine(
+                            process_photo(bot_application.bot, db_user, file_path, chat_id)
+                        )
+                    except Exception as e:
+                        logger.error(f"Error in event loop manager: {e}")
+                        # Send an error message
+                        loop_manager.run_coroutine(
+                            bot_application.bot.send_message(
+                                chat_id=chat_id, 
+                                text=f"Error processing image: {str(e)}"
+                            )
+                        )
                     
                     return True
                 except Exception as e:
                     logger.error(f"Error processing photo: {e}")
                     try:
-                        import asyncio
-                        loop = asyncio.new_event_loop()
-                        asyncio.set_event_loop(loop)
-                        loop.run_until_complete(bot_application.bot.send_message(
-                            chat_id=chat_id,
-                            text=f"I encountered an error processing your photo: {str(e)}"
-                        ))
-                        loop.close()
+                        # Use event loop manager for error sending
+                        loop_manager = EventLoopManager()
+                        loop_manager.run_coroutine(
+                            bot_application.bot.send_message(
+                                chat_id=chat_id,
+                                text=f"I encountered an error processing your photo: {str(e)}"
+                            )
+                        )
                     except Exception as send_error:
                         logger.error(f"Error sending error message: {send_error}")
                     return True
@@ -894,16 +926,15 @@ def process_update(update_data):
                 # Process with OpenManus
                 response = manus_process(db_user, text, None)
 
-                # Use the regular sendMessage method instead of async to avoid event loop issues
+                # Use our event loop manager to send messages
                 try:
-                    import asyncio
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-                    loop.run_until_complete(bot_application.bot.send_message(
-                        chat_id=chat_id,
-                        text=response
-                    ))
-                    loop.close()
+                    loop_manager = EventLoopManager()
+                    loop_manager.run_coroutine(
+                        bot_application.bot.send_message(
+                            chat_id=chat_id,
+                            text=response
+                        )
+                    )
                 except Exception as send_error:
                     logger.error(f"Error sending message: {send_error}")
                     # Fallback to a direct HTTP request if needed
@@ -958,9 +989,7 @@ def setup_webhook(url):
         # Get the bot instance
         bot = bot_application.bot
 
-        # Use async event loop to run the coroutine
-        import asyncio
-
+        # Use EventLoopManager to run the coroutine
         async def async_set_webhook():
             try:
                 # Set the webhook
@@ -970,11 +999,9 @@ def setup_webhook(url):
                 logger.error(f"Error in async set_webhook: {e}")
                 return False
 
-        # Run the async function in the event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        webhook_info = loop.run_until_complete(async_set_webhook())
-        loop.close()
+        # Run the async function using our event loop manager
+        loop_manager = EventLoopManager()
+        webhook_info = loop_manager.run_coroutine(async_set_webhook())
 
         if webhook_info:
             logger.info(f"Webhook set up successfully at {url}")
@@ -996,9 +1023,7 @@ def remove_webhook():
         # Get the bot instance
         bot = bot_application.bot
 
-        # Use async event loop to run the coroutine
-        import asyncio
-
+        # Use EventLoopManager to run the coroutine
         async def async_remove_webhook():
             try:
                 # Remove the webhook
@@ -1008,11 +1033,9 @@ def remove_webhook():
                 logger.error(f"Error in async remove_webhook: {e}")
                 return False
 
-        # Run the async function in the event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        success = loop.run_until_complete(async_remove_webhook())
-        loop.close()
+        # Run the async function using our event loop manager
+        loop_manager = EventLoopManager()
+        success = loop_manager.run_coroutine(async_remove_webhook())
 
         if success:
             logger.info("Webhook removed successfully")
