@@ -10,11 +10,21 @@ logger = logging.getLogger(__name__)
 BOT_TOKEN_PRODUCTION = os.environ.get("TELEGRAM_BOT_TOKEN_DONNAH")  # Production bot token
 BOT_TOKEN_DEVELOPMENT = os.environ.get("TELEGRAM_BOT_TOKEN_NOENA")  # Development bot token
 
-# Determine which token to use - production has priority if both are set
-ACTIVE_BOT_TOKEN = BOT_TOKEN_PRODUCTION or BOT_TOKEN_DEVELOPMENT
+# Check if this is a deployed environment (not the Replit development server)
+IS_DEPLOYED = not os.environ.get("REPLIT_DEV_DOMAIN", "").endswith("janeway.replit.dev")
 
-# Determine environment based on token
-ENVIRONMENT = "production" if ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION else "development"
+# Force production token on deployed environment, otherwise use available token with production priority
+if IS_DEPLOYED:
+    # When deployed, ONLY use the production token
+    ACTIVE_BOT_TOKEN = BOT_TOKEN_PRODUCTION
+    ENVIRONMENT = "production"
+else:
+    # In development (Replit), use available token with production having priority
+    ACTIVE_BOT_TOKEN = BOT_TOKEN_PRODUCTION or BOT_TOKEN_DEVELOPMENT
+    ENVIRONMENT = "production" if ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION else "development"
+
+# Log deployment status
+logger.info(f"Deployment status: {'DEPLOYED' if IS_DEPLOYED else 'DEVELOPMENT'}")
 
 # Google API configuration
 GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
@@ -56,6 +66,10 @@ def check_env_vars():
         return False
     
     # Log which token and environment are being used
+    if IS_DEPLOYED and not BOT_TOKEN_PRODUCTION:
+        logger.error("DEPLOYED ENVIRONMENT MISSING PRODUCTION TOKEN! TELEGRAM_BOT_TOKEN_DONNAH must be configured")
+        # We still return True to allow app to start, but log a serious error
+    
     if BOT_TOKEN_PRODUCTION:
         logger.info(f"Using Production token (TELEGRAM_BOT_TOKEN_DonnaH) in {ENVIRONMENT} mode")
     elif BOT_TOKEN_DEVELOPMENT:
