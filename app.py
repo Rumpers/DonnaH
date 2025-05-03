@@ -411,7 +411,7 @@ def remove_telegram_webhook():
     return redirect(url_for('dashboard'))
     
 @app.route('/telegram_webhook', methods=['POST'])
-async def telegram_webhook():
+def telegram_webhook():
     """
     Handle Telegram webhook requests.
     This route receives updates from Telegram when a user interacts with the bot.
@@ -421,10 +421,13 @@ async def telegram_webhook():
         update_data = json.loads(request.data)
         logger.debug(f"Received update from Telegram: {update_data}")
         
-        # Process the update asynchronously
-        await telegram_bot.process_update(update_data)
+        # Process the update - this is no longer async
+        success = telegram_bot.process_update(update_data)
         
-        return jsonify({"status": "success"})
+        if success:
+            return jsonify({"status": "success"})
+        else:
+            return jsonify({"status": "error", "message": "Failed to process update"}), 500
     except Exception as e:
         logger.error(f"Error processing Telegram update: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
