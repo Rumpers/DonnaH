@@ -679,7 +679,70 @@ def switch_token():
     else:
         flash(f'Already using the {target_token.upper()} token', 'info')
     
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('status'))
+
+@app.route('/switch_environment', methods=['POST'])
+@login_required
+def switch_environment():
+    """Switch between development and production environments"""
+    # This route should only be used in development
+    if config.IS_DEPLOYED:
+        flash('Environment switching is disabled in production environment', 'danger')
+        return redirect(url_for('status'))
+    
+    # Get the target environment
+    target_env = request.form.get('target_environment', 'development')
+    
+    # Validate input
+    if target_env not in ['development', 'production']:
+        flash('Invalid environment specified', 'danger')
+        return redirect(url_for('status'))
+    
+    # Store old environment for comparison
+    old_env = config.ENVIRONMENT
+    
+    # Update the environment setting
+    if old_env != target_env:
+        config.ENVIRONMENT = target_env
+        logger.info(f"Switched to {target_env.upper()} environment")
+        
+        # Update the token to match the new environment
+        old_token = config.ACTIVE_BOT_TOKEN
+        config.set_token_for_environment()
+        
+        # Check if the token changed as a result
+        if old_token != config.ACTIVE_BOT_TOKEN:
+            # Re-initialize the bot with the new token from the environment
+            try:
+                is_registered = telegram_bot.initialize_bot(config.ACTIVE_BOT_TOKEN)
+                if is_registered:
+                    # Reset the webhook
+                    webhook_url = None
+                    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+                    if replit_domain:
+                        webhook_url = f"https://{replit_domain}/telegram_webhook"
+                        success = telegram_bot.setup_webhook(webhook_url)
+                        if success:
+                            logger.info(f"Webhook updated for {target_env.upper()} environment")
+                            flash(f'Successfully switched to {target_env.upper()} environment and updated webhook', 'success')
+                        else:
+                            logger.warning(f"Failed to update webhook for {target_env.upper()} environment")
+                            flash(f'Switched to {target_env.upper()} environment but failed to update webhook', 'warning')
+                    else:
+                        logger.warning("No Replit domain found for webhook setup")
+                        flash(f'Switched to {target_env.upper()} environment but could not update webhook', 'warning')
+                else:
+                    logger.error(f"Failed to initialize bot for {target_env.upper()} environment")
+                    flash(f'Failed to initialize bot for {target_env.upper()} environment', 'danger')
+            except Exception as e:
+                logger.error(f"Error switching environment: {str(e)}")
+                flash(f'Error switching environment: {str(e)}', 'danger')
+        else:
+            flash(f'Switched to {target_env.upper()} environment', 'success')
+    else:
+        flash(f'Already in {target_env.upper()} environment', 'info')
+    
+    return redirect(url_for('status'))
 
 @app.route('/inspect_users')
 def inspect_users():

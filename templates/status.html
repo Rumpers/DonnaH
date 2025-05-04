@@ -148,9 +148,19 @@
                         <div class="mt-3">
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span>Mode:</span>
-                                <span class="badge bg-{{ 'primary' if environment == 'development' else 'success' }}">
-                                    {{ environment }}
-                                </span>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-{{ 'primary' if environment == 'development' else 'success' }} me-2">
+                                        {{ environment }}
+                                    </span>
+                                    {% if not is_deployed %}
+                                    <form action="{{ url_for('switch_environment') }}" method="POST" class="d-inline">
+                                        <input type="hidden" name="target_environment" value="{% if environment == 'development' %}production{% else %}development{% endif %}">
+                                        <button type="submit" class="btn btn-sm btn-outline-primary">
+                                            Switch
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                </div>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span>Debug:</span>
