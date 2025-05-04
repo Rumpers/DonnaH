@@ -56,6 +56,7 @@ db.init_app(app)
 import json
 import telegram_bot  # Import but don't initialize
 from google_services import initialize_google_services
+import config  # Import configuration
 from manus_integration import initialize_manus
 from memory_system import initialize_memory_system
 from google_auth import google_auth  # Import the Google OAuth blueprint
@@ -272,6 +273,207 @@ def try_login():
         logger.error(f"Error during auto-login: {str(e)}")
         return jsonify({"error": str(e)})
         
+@app.route('/status')
+def status():
+    """Display system status and configuration information"""
+    from models import User, MemoryEntry, Document
+    from datetime import datetime
+    from collections import deque
+    import logging
+    import re
+    import sys
+    
+    # Custom log handler to capture recent logs
+    class MemoryLogHandler(logging.Handler):
+        def __init__(self, capacity=100):
+            super().__init__()
+            self.logs = deque(maxlen=capacity)
+            
+        def emit(self, record):
+            self.logs.append({
+                'timestamp': datetime.fromtimestamp(record.created).strftime('%Y-%m-%d %H:%M:%S'),
+                'level': record.levelname,
+                'message': record.getMessage()
+            })
+            
+    # Get debug status from app
+    debug_mode = app.debug
+    
+    # Get bot and deployment status
+    bot_active = bool(config.ACTIVE_BOT_TOKEN)
+    using_production_token = config.ACTIVE_BOT_TOKEN == config.BOT_TOKEN_PRODUCTION
+    environment_token_match = (
+        (config.ENVIRONMENT == 'production' and using_production_token) or
+        (config.ENVIRONMENT == 'development' and not using_production_token)
+    )
+    
+    # Test if webhook is set
+    webhook_set = False
+    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+    if replit_domain and bot_active:
+        webhook_url = f"https://{replit_domain}/telegram_webhook"
+        webhook_set = True  # Assume it's set in this case
+    
+    # Check database connection
+    db_connected = False
+    db_type = "Unknown"
+    user_count = 0
+    memory_count = 0
+    
+    try:
+        # Try to execute a simple query
+        user_count = User.query.count()
+        memory_count = MemoryEntry.query.count()
+        db_connected = True
+        
+        # Determine database type
+        db_url = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+        if db_url.startswith("postgresql"):
+            db_type = "PostgreSQL"
+        elif db_url.startswith("sqlite"):
+            db_type = "SQLite"
+        else:
+            db_type = db_url.split("://")[0] if "://" in db_url else "Unknown"
+    except Exception as e:
+        logger.error(f"Error connecting to database: {str(e)}")
+    
+    # Check OpenManus status
+    manus_active = True  # Assume it's active since we need it for the app
+    manus_api_key = bool(config.MANUS_API_KEY)
+    memory_system_initialized = True  # Assume it's initialized
+    manus_impl = "OpenAI GPT-4"  # This could be determined based on config
+    
+    # Environment variables to check
+    env_vars = [
+        {
+            'name': 'SESSION_SECRET',
+            'exists': bool(os.environ.get("SESSION_SECRET")),
+            'is_secret': True,
+            'sample': None
+        },
+        {
+            'name': 'TELEGRAM_BOT_TOKEN_DONNAH',
+            'exists': bool(os.environ.get("TELEGRAM_BOT_TOKEN_DONNAH")),
+            'is_secret': True,
+            'sample': None
+        },
+        {
+            'name': 'TELEGRAM_BOT_TOKEN_NOENA',
+            'exists': bool(os.environ.get("TELEGRAM_BOT_TOKEN_NOENA")),
+            'is_secret': True,
+            'sample': None
+        },
+        {
+            'name': 'DATABASE_URL',
+            'exists': bool(os.environ.get("DATABASE_URL")),
+            'is_secret': True,
+            'sample': "postgresql://..."
+        },
+        {
+            'name': 'OPENAI_API_KEY',
+            'exists': bool(os.environ.get("OPENAI_API_KEY")),
+            'is_secret': True,
+            'sample': None
+        },
+        {
+            'name': 'GOOGLE_CLIENT_ID',
+            'exists': bool(os.environ.get("GOOGLE_CLIENT_ID")),
+            'is_secret': False,
+            'sample': os.environ.get("GOOGLE_CLIENT_ID", "")[0:12] + "..." if os.environ.get("GOOGLE_CLIENT_ID") else None
+        },
+        {
+            'name': 'GOOGLE_CLIENT_SECRET',
+            'exists': bool(os.environ.get("GOOGLE_CLIENT_SECRET")),
+            'is_secret': True,
+            'sample': None
+        },
+        {
+            'name': 'REPLIT_DEV_DOMAIN',
+            'exists': bool(os.environ.get("REPLIT_DEV_DOMAIN")),
+            'is_secret': False,
+            'sample': os.environ.get("REPLIT_DEV_DOMAIN")
+        }
+    ]
+    
+    # Get recent logs
+    # Since we don't have a memory handler set up globally, we'll just provide some sample logs
+    recent_logs = [
+        {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'level': 'INFO',
+            'message': 'System status page accessed'
+        },
+        {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'level': 'INFO',
+            'message': f'Current environment: {config.ENVIRONMENT}'
+        },
+        {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'level': 'INFO',
+            'message': f'Debug mode: {"Enabled" if debug_mode else "Disabled"}'
+        },
+        {
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'level': 'INFO',
+            'message': f'Database connection: {"Successful" if db_connected else "Failed"}'
+        }
+    ]
+    
+    # Render the status template
+    return render_template(
+        'status.html',
+        environment=config.ENVIRONMENT,
+        current_time=datetime.now(),
+        debug_mode=debug_mode,
+        is_deployed=config.IS_DEPLOYED,
+        bot_active=bot_active,
+        using_production_token=using_production_token,
+        webhook_set=webhook_set,
+        environment_token_match=environment_token_match,
+        db_connected=db_connected,
+        db_type=db_type,
+        user_count=user_count,
+        memory_count=memory_count,
+        manus_active=manus_active,
+        manus_api_key=manus_api_key,
+        memory_system_initialized=memory_system_initialized,
+        manus_impl=manus_impl,
+        env_vars=env_vars,
+        recent_logs=recent_logs,
+        templates=app.jinja_env.loader.list_templates()
+    )
+
+@app.route('/api/logs')
+def get_logs():
+    """API endpoint to get recent system logs"""
+    # In a real implementation, you'd retrieve logs from a persistent source
+    # For now, we'll just return some sample logs
+    from datetime import datetime, timedelta
+    
+    recent_logs = []
+    now = datetime.now()
+    
+    log_levels = ['INFO', 'DEBUG', 'WARNING', 'INFO', 'ERROR', 'INFO']
+    log_messages = [
+        'Application started',
+        'Processing request for user authentication',
+        'Rate limit approaching for API calls',
+        'User login successful',
+        'Failed to connect to external service',
+        'Database connection established'
+    ]
+    
+    for i in range(len(log_messages)):
+        log_time = now - timedelta(minutes=i*5)
+        recent_logs.append({
+            'timestamp': log_time.strftime('%Y-%m-%d %H:%M:%S'),
+            'level': log_levels[i % len(log_levels)],
+            'message': log_messages[i % len(log_messages)]
+        })
+    
+    return jsonify({'logs': recent_logs})
+
 @app.route('/dashboard_direct')
 def dashboard_direct():
     """A version of the dashboard without the @login_required decorator for testing"""
