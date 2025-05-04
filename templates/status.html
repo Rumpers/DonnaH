@@ -1,19 +1,12 @@
-{% if 'base.html' in templates %}
-{% extends 'base.html' %}
-{% endif %}
-
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    {% if 'base.html' not in templates %}
     <title>OpenManus Assistant - System Status</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
-    {% else %}
-    <title>{% block title %}System Status{% endblock %}</title>
-    {% endif %}
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
     <style>
         .status-card {
             transition: all 0.3s ease;
@@ -65,7 +58,6 @@
     </style>
 </head>
 <body>
-    {% if 'base.html' not in templates %}
     <!-- Navigation Bar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
@@ -116,9 +108,7 @@
             {% endif %}
         {% endwith %}
     </div>
-    {% endif %}
 
-    {% block content %}
     <div class="container py-4">
         <div class="row mb-4">
             <div class="col">
@@ -272,14 +262,14 @@
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
                                 <span>API Key:</span>
-                                <span class="badge bg-{{ 'success' if manus_api_key else 'warning' }}">
+                                <span class="badge bg-{{ 'success' if manus_api_key else 'danger' }}">
                                     {{ 'Configured' if manus_api_key else 'Missing' }}
                                 </span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center mb-2">
-                                <span>Memory System:</span>
-                                <span class="badge bg-{{ 'success' if memory_system_initialized else 'warning' }}">
-                                    {{ 'Initialized' if memory_system_initialized else 'Not Initialized' }}
+                                <span>Memory:</span>
+                                <span class="badge bg-{{ 'success' if memory_system_initialized else 'danger' }}">
+                                    {{ 'Initialized' if memory_system_initialized else 'Error' }}
                                 </span>
                             </div>
                             <div class="d-flex justify-content-between align-items-center">
@@ -294,52 +284,61 @@
 
         <!-- Environment Variables -->
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light">
-                <h4 class="card-title mb-0"><i class="bi bi-gear me-2"></i> Environment Configuration</h4>
+            <div class="card-header bg-dark">
+                <h5 class="mb-0">
+                    <i class="bi bi-key me-2"></i>
+                    Environment Variables
+                </h5>
             </div>
             <div class="card-body">
-                <table class="table table-striped env-table">
-                    <thead>
-                        <tr>
-                            <th>Variable</th>
-                            <th>Status</th>
-                            <th>Value</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for env in env_vars %}
-                        <tr>
-                            <td><strong>{{ env.name }}</strong></td>
-                            <td>
-                                <span class="badge status-badge bg-{{ 'success' if env.exists else 'danger' }}">
-                                    {{ 'Set' if env.exists else 'Missing' }}
-                                </span>
-                            </td>
-                            <td>
-                                {% if env.exists %}
-                                    {% if env.is_secret %}
-                                        <span class="secret-value">********</span>
-                                    {% else %}
-                                        <span class="secret-value">{{ env.sample }}</span>
-                                    {% endif %}
-                                {% else %}
-                                    <span class="text-danger">
-                                        <i class="bi bi-exclamation-triangle me-1"></i> Not configured
+                <div class="table-responsive">
+                    <table class="table table-dark env-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Variable</th>
+                                <th scope="col">Status</th>
+                                <th scope="col">Value</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for var in env_vars %}
+                            <tr>
+                                <td>{{ var.name }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if var.exists else 'danger' }}">
+                                        {{ 'Set' if var.exists else 'Missing' }}
                                     </span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+                                </td>
+                                <td>
+                                    {% if var.exists %}
+                                        {% if var.is_secret %}
+                                            <span class="secret-value">
+                                                <i class="bi bi-shield-lock me-1"></i>
+                                                [REDACTED]
+                                            </span>
+                                        {% else %}
+                                            <span class="secret-value">{{ var.sample }}</span>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-danger">Not configured</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
-        <!-- System Logs -->
+        <!-- Recent Logs -->
         <div class="card border-0 shadow-sm mb-4">
-            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                <h4 class="card-title mb-0"><i class="bi bi-journals me-2"></i> Recent System Logs</h4>
-                <div>
+            <div class="card-header bg-dark">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0">
+                        <i class="bi bi-list-ul me-2"></i>
+                        Recent System Logs
+                    </h5>
                     <button class="btn btn-sm btn-outline-secondary" id="refresh-logs-btn">
                         <i class="bi bi-arrow-clockwise me-1"></i> Refresh Logs
                     </button>
@@ -351,17 +350,16 @@
                     <div class="log-entry">
                         <span class="timestamp">{{ log.timestamp }}</span>
                         <span class="log-{{ log.level|lower }}">
-                            [{{ log.level }}] {{ log.message }}
+                            [{{ log.level }}]
                         </span>
+                        <span class="log-message">{{ log.message }}</span>
                     </div>
                     {% endfor %}
                 </div>
             </div>
         </div>
     </div>
-    {% endblock %}
 
-    {% if 'base.html' not in templates %}
     <!-- Bootstrap and Custom JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
@@ -369,29 +367,39 @@
             const refreshLogsBtn = document.getElementById('refresh-logs-btn');
             const logContainer = document.getElementById('log-container');
             
-            if (refreshLogsBtn && logContainer) {
-                refreshLogsBtn.addEventListener('click', function() {
-                    fetch('/api/logs')
-                        .then(response => response.json())
-                        .then(data => {
-                            let logHTML = '';
-                            data.logs.forEach(log => {
-                                logHTML += `<div class="log-entry">
-                                    <span class="timestamp">${log.timestamp}</span>
-                                    <span class="log-${log.level.toLowerCase()}">
-                                        [${log.level}] ${log.message}
-                                    </span>
-                                </div>`;
-                            });
-                            logContainer.innerHTML = logHTML;
-                        })
-                        .catch(error => {
-                            console.error('Error fetching logs:', error);
+            // Function to refresh logs
+            function refreshLogs() {
+                fetch('/api/logs')
+                    .then(response => response.json())
+                    .then(data => {
+                        // Clear current logs
+                        logContainer.innerHTML = '';
+                        
+                        // Add new logs
+                        data.logs.forEach(log => {
+                            const logEntry = document.createElement('div');
+                            logEntry.className = 'log-entry';
+                            logEntry.innerHTML = `
+                                <span class="timestamp">${log.timestamp}</span>
+                                <span class="log-${log.level.toLowerCase()}">
+                                    [${log.level}]
+                                </span>
+                                <span class="log-message">${log.message}</span>
+                            `;
+                            logContainer.appendChild(logEntry);
                         });
-                });
+                    })
+                    .catch(error => {
+                        console.error('Error fetching logs:', error);
+                    });
             }
+            
+            // Add click listener to refresh button
+            refreshLogsBtn.addEventListener('click', refreshLogs);
+            
+            // Auto-scroll to bottom of log container
+            logContainer.scrollTop = logContainer.scrollHeight;
         });
     </script>
-    {% endif %}
 </body>
 </html>

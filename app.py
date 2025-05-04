@@ -440,8 +440,7 @@ def status():
         memory_system_initialized=memory_system_initialized,
         manus_impl=manus_impl,
         env_vars=env_vars,
-        recent_logs=recent_logs,
-        templates=app.jinja_env.loader.list_templates()
+        recent_logs=recent_logs
     )
 
 @app.route('/api/logs')
