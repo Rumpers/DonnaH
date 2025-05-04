@@ -22,7 +22,15 @@ db = SQLAlchemy(model_class=Base)
 
 # Create Flask application
 app = Flask(__name__)
-app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
+
+# Use environment variable for secret key, or generate a secure random one for development
+if os.environ.get("SESSION_SECRET"):
+    app.secret_key = os.environ.get("SESSION_SECRET")
+else:
+    # If no secret key is set, generate a random one - warning: this will invalidate sessions on restart
+    logger.warning("No SESSION_SECRET environment variable set. Using a random secret key.")
+    app.secret_key = secrets.token_hex(32)
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
 
 # Initialize LoginManager
