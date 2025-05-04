@@ -31,7 +31,7 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 
 # OpenManus configuration
-MANUS_API_KEY = os.environ.get("MANUS_API_KEY")
+MANUS_API_KEY = os.environ.get("OPENAI_API_KEY")  # Using OpenAI API key directly
 MANUS_API_URL = os.environ.get("MANUS_API_URL", "https://api.openmanus.ai")
 MANUS_MODEL = os.environ.get("MANUS_MODEL", "gpt-4o")
 
