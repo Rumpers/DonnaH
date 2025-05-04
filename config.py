@@ -22,8 +22,16 @@ def set_token_for_environment():
     global ACTIVE_BOT_TOKEN
     if ENVIRONMENT == "production":
         ACTIVE_BOT_TOKEN = BOT_TOKEN_PRODUCTION
+        if ACTIVE_BOT_TOKEN:
+            logger.info(f"Setting active token to PRODUCTION: {ACTIVE_BOT_TOKEN[:5]}...")
+        else:
+            logger.warning("Production token is not available!")
     else:
         ACTIVE_BOT_TOKEN = BOT_TOKEN_DEVELOPMENT
+        if ACTIVE_BOT_TOKEN:
+            logger.info(f"Setting active token to DEVELOPMENT: {ACTIVE_BOT_TOKEN[:5]}...")
+        else:
+            logger.warning("Development token is not available!")
     return ACTIVE_BOT_TOKEN
 
 # Set initial token

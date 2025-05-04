@@ -742,7 +742,7 @@ async def cancel(update: Update, context: CallbackContext) -> int:
 # Global variable to track the bot thread
 bot_thread = None
 
-def initialize_bot(token, webhook_url=None):
+def initialize_bot(token, webhook_url=None, force_reinit=False):
     """
     Initialize the Telegram bot with the given token.
 
@@ -750,13 +750,18 @@ def initialize_bot(token, webhook_url=None):
         token (str): The Telegram bot token
         webhook_url (str, optional): The webhook URL for the bot. If provided,
                                    the bot will be set up to use webhooks.
+        force_reinit (bool): Force reinitialization even if bot is already initialized
     """
     global bot_application, bot_thread
 
     # Check if bot is already initialized
     if bot_application is not None:
-        logger.info("Telegram bot is already initialized")
-        return True
+        if not force_reinit:
+            logger.info("Telegram bot is already initialized")
+            return True
+        else:
+            logger.info("Force reinitialization of Telegram bot requested")
+            bot_application = None
 
     try:
         # Create the Application

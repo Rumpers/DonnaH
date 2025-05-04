@@ -710,35 +710,36 @@ def switch_environment():
         old_token = config.ACTIVE_BOT_TOKEN
         config.set_token_for_environment()
         
-        # Check if the token changed as a result
-        if old_token != config.ACTIVE_BOT_TOKEN:
-            # Re-initialize the bot with the new token from the environment
-            try:
-                is_registered = telegram_bot.initialize_bot(config.ACTIVE_BOT_TOKEN)
-                if is_registered:
-                    # Reset the webhook
-                    webhook_url = None
-                    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-                    if replit_domain:
-                        webhook_url = f"https://{replit_domain}/telegram_webhook"
-                        success = telegram_bot.setup_webhook(webhook_url)
-                        if success:
-                            logger.info(f"Webhook updated for {target_env.upper()} environment")
-                            flash(f'Successfully switched to {target_env.upper()} environment and updated webhook', 'success')
+        # Always force reinitialization of the bot when switching environments
+        try:
+            # Always force reinitialization for environment switch
+            is_registered = telegram_bot.initialize_bot(config.ACTIVE_BOT_TOKEN, force_reinit=True)
+            if is_registered:
+                # Reset the webhook
+                webhook_url = None
+                replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+                if replit_domain:
+                    webhook_url = f"https://{replit_domain}/telegram_webhook"
+                    success = telegram_bot.setup_webhook(webhook_url)
+                    if success:
+                        if config.ACTIVE_BOT_TOKEN:
+                            token_prefix = config.ACTIVE_BOT_TOKEN[:5]
+                            logger.info(f"Webhook updated for {target_env.upper()} environment with token: {token_prefix}...")
                         else:
-                            logger.warning(f"Failed to update webhook for {target_env.upper()} environment")
-                            flash(f'Switched to {target_env.upper()} environment but failed to update webhook', 'warning')
+                            logger.info(f"Webhook updated for {target_env.upper()} environment")
+                        flash(f'Successfully switched to {target_env.upper()} environment and updated webhook', 'success')
                     else:
-                        logger.warning("No Replit domain found for webhook setup")
-                        flash(f'Switched to {target_env.upper()} environment but could not update webhook', 'warning')
+                        logger.warning(f"Failed to update webhook for {target_env.upper()} environment")
+                        flash(f'Switched to {target_env.upper()} environment but failed to update webhook', 'warning')
                 else:
-                    logger.error(f"Failed to initialize bot for {target_env.upper()} environment")
-                    flash(f'Failed to initialize bot for {target_env.upper()} environment', 'danger')
-            except Exception as e:
-                logger.error(f"Error switching environment: {str(e)}")
-                flash(f'Error switching environment: {str(e)}', 'danger')
-        else:
-            flash(f'Switched to {target_env.upper()} environment', 'success')
+                    logger.warning("No Replit domain found for webhook setup")
+                    flash(f'Switched to {target_env.upper()} environment but could not update webhook', 'warning')
+            else:
+                logger.error(f"Failed to initialize bot for {target_env.upper()} environment")
+                flash(f'Failed to initialize bot for {target_env.upper()} environment', 'danger')
+        except Exception as e:
+            logger.error(f"Error switching environment: {str(e)}")
+            flash(f'Error switching environment: {str(e)}', 'danger')
     else:
         flash(f'Already in {target_env.upper()} environment', 'info')
     
@@ -804,8 +805,8 @@ def setup_telegram_webhook():
             flash('Replit domain not available. Cannot set up webhook.', 'danger')
             return redirect(url_for('dashboard'))
             
-        # Initialize bot if not already initialized
-        is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN)
+        # Initialize bot with force reinit to ensure correct token is used
+        is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN, force_reinit=True)
         if not is_registered:
             flash('Failed to initialize Telegram bot. Check logs for details.', 'danger')
             return redirect(url_for('dashboard'))
@@ -839,8 +840,8 @@ def remove_telegram_webhook():
         # Log which token and environment are being used
         logger.info(f"Using {'Production' if ENVIRONMENT == 'production' else 'Development'} bot for webhook removal")
             
-        # Initialize bot if not already initialized
-        is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN)
+        # Initialize bot with force reinit to ensure correct token is used
+        is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN, force_reinit=True)
         if not is_registered:
             flash('Failed to initialize Telegram bot. Check logs for details.', 'danger')
             return redirect(url_for('dashboard'))
