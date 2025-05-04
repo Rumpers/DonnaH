@@ -572,6 +572,73 @@ with app.app_context():
     except Exception as e:
         logger.error(f"Error initializing services: {e}")
 
+@app.route('/switch_token', methods=['POST'])
+@login_required
+def switch_token():
+    """Switch between development and production tokens in development environment"""
+    # This route should only be used in development
+    if config.IS_DEPLOYED:
+        flash('Token switching is disabled in production environment', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Get the target token type
+    target_token = request.form.get('target_token', 'development')
+    
+    # Validate input
+    if target_token not in ['development', 'production']:
+        flash('Invalid token type specified', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Check if the target token is available
+    if target_token == 'production' and not config.BOT_TOKEN_PRODUCTION:
+        flash('Production token is not available', 'danger')
+        return redirect(url_for('dashboard'))
+    elif target_token == 'development' and not config.BOT_TOKEN_DEVELOPMENT:
+        flash('Development token is not available', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # Store the current active token for comparison
+    old_token = config.ACTIVE_BOT_TOKEN
+    
+    # Update the active token in config
+    if target_token == 'production':
+        config.ACTIVE_BOT_TOKEN = config.BOT_TOKEN_PRODUCTION
+        logger.info("Switched to PRODUCTION token")
+    else:
+        config.ACTIVE_BOT_TOKEN = config.BOT_TOKEN_DEVELOPMENT
+        logger.info("Switched to DEVELOPMENT token")
+    
+    # Only rebuild the bot if the token has actually changed
+    if old_token != config.ACTIVE_BOT_TOKEN:
+        # Re-initialize the bot with the new token
+        try:
+            is_registered = telegram_bot.initialize_bot(config.ACTIVE_BOT_TOKEN)
+            if is_registered:
+                # Reset the webhook if using a different token
+                webhook_url = None
+                replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+                if replit_domain:
+                    webhook_url = f"https://{replit_domain}/telegram_webhook"
+                    success = telegram_bot.setup_webhook(webhook_url)
+                    if success:
+                        logger.info(f"Webhook updated to use the {target_token.upper()} token")
+                        flash(f'Successfully switched to {target_token.upper()} token and updated webhook', 'success')
+                    else:
+                        logger.warning(f"Failed to update webhook for {target_token.upper()} token")
+                        flash(f'Switched to {target_token.upper()} token but failed to update webhook', 'warning')
+                else:
+                    flash(f'Switched to {target_token.upper()} token but could not update webhook (domain not available)', 'warning')
+            else:
+                logger.error(f"Failed to initialize bot with {target_token.upper()} token")
+                flash(f'Failed to initialize bot with {target_token.upper()} token', 'danger')
+        except Exception as e:
+            logger.error(f"Error switching tokens: {str(e)}")
+            flash(f'Error switching tokens: {str(e)}', 'danger')
+    else:
+        flash(f'Already using the {target_token.upper()} token', 'info')
+    
+    return redirect(url_for('dashboard'))
+
 @app.route('/inspect_users')
 def inspect_users():
     from models import User

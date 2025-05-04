@@ -149,9 +149,19 @@
                                             </li>
                                             <li class="list-group-item bg-dark text-white d-flex justify-content-between">
                                                 <span>Active Token:</span>
-                                                <span class="badge {% if token_info.using_production_token %}bg-success{% else %}bg-secondary{% endif %}">
-                                                    {% if token_info.using_production_token %}PRODUCTION{% else %}DEVELOPMENT{% endif %}
-                                                </span>
+                                                <div>
+                                                    <span class="badge {% if token_info.using_production_token %}bg-success{% else %}bg-secondary{% endif %} me-2">
+                                                        {% if token_info.using_production_token %}PRODUCTION{% else %}DEVELOPMENT{% endif %}
+                                                    </span>
+                                                    {% if not token_info.is_deployed %}
+                                                    <form action="{{ url_for('switch_token') }}" method="POST" class="d-inline">
+                                                        <input type="hidden" name="target_token" value="{% if token_info.using_production_token %}development{% else %}production{% endif %}">
+                                                        <button type="submit" class="btn btn-sm btn-outline-warning">
+                                                            Switch to {% if token_info.using_production_token %}DEV{% else %}PROD{% endif %}
+                                                        </button>
+                                                    </form>
+                                                    {% endif %}
+                                                </div>
                                             </li>
                                             <li class="list-group-item bg-dark text-white d-flex justify-content-between">
                                                 <span>Production Token:</span>
