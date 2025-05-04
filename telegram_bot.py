@@ -2,12 +2,41 @@ import os
 import logging
 import threading
 import asyncio
-import requests
+import requests  # Global import of requests
 import base64
 import io
 import json
 from datetime import datetime
 from app import db
+
+# Utility function for HTTP-based Telegram API calls
+def send_telegram_message(chat_id, text, token=None):
+    """
+    Send a message to a Telegram chat using HTTP API directly.
+    This avoids potential issues with async/await patterns.
+    
+    Args:
+        chat_id: The Telegram chat ID
+        text: The message text to send
+        token: Optional token override, defaults to ACTIVE_BOT_TOKEN
+        
+    Returns:
+        True if successful, False on error
+    """
+    try:
+        from config import ACTIVE_BOT_TOKEN
+        telegram_token = token or ACTIVE_BOT_TOKEN
+        
+        # Using the global requests module
+        response = requests.post(
+            f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+            json={"chat_id": chat_id, "text": text}
+        )
+        logging.info(f"Sent Telegram message via HTTP API: {response.status_code}")
+        return True
+    except Exception as e:
+        logging.error(f"Failed to send Telegram message: {e}")
+        return False
 from models import User, Conversation, Message, MemoryEntry, FaceImage
 import memory_system
 from config import ACTIVE_BOT_TOKEN, ENVIRONMENT
@@ -897,49 +926,23 @@ def process_update(update_data):
                 db_user = User.query.filter_by(telegram_id=telegram_id).first()
 
                 if db_user:
-                    # User already registered
-                    try:
-                        bot_application.bot.send_message(
-                            chat_id=chat_id,
-                            text=f"Welcome back, {db_user.username}! How can I help you today?\n\n"
-                                 "You can ask me about your emails, calendar events, documents, or anything else you need help with."
-                        )
-                    except Exception as e:
-                        logger.error(f"Error sending welcome message: {e}")
-                        # Fallback to a direct HTTP request
-                        try:
-                            import requests
-                            telegram_token = os.environ.get("TELEGRAM_TOKEN")
-                            requests.post(
-                                f"https://api.telegram.org/bot{telegram_token}/sendMessage",
-                                json={"chat_id": chat_id, "text": f"Welcome back, {db_user.username}! How can I help you today?\n\nYou can ask me about your emails, calendar events, documents, or anything else you need help with."}
-                            )
-                        except Exception as http_error:
-                            logger.error(f"Failed fallback request: {http_error}")
+                    # User already registered - use our utility function
+                    welcome_back_msg = f"Welcome back, {db_user.username}! How can I help you today?\n\nYou can ask me about your emails, calendar events, documents, or anything else you need help with."
+                    success = send_telegram_message(chat_id, welcome_back_msg)
+                    if not success:
+                        logger.error("Failed to send welcome back message")
                 else:
-                    # User not registered - prompt for linking with user ID using direct HTTP request
-                    try:
-                        # Use the active token directly instead of trying to use the bot object
-                        telegram_token = ACTIVE_BOT_TOKEN
-                        response = requests.post(
-                            f"https://api.telegram.org/bot{telegram_token}/sendMessage",
-                            json={"chat_id": chat_id, "text": "Welcome to OpenManus Executive Assistant! I'm your AI-powered assistant.\n\nTo link this Telegram account with your registered web account, please enter your user ID number.\nYou can find your user ID on the dashboard in the Telegram Bot section."}
-                        )
-                        logger.info(f"Sent welcome message using HTTP API: {response.status_code}")
-                    except Exception as http_error:
-                        logger.error(f"Failed to send welcome message: {http_error}")
+                    # User not registered - prompt for linking with user ID using our utility function
+                    welcome_msg = "Welcome to OpenManus Executive Assistant! I'm your AI-powered assistant.\n\nTo link this Telegram account with your registered web account, please enter your user ID number.\nYou can find your user ID on the dashboard in the Telegram Bot section."
+                    success = send_telegram_message(chat_id, welcome_msg)
+                    if not success:
+                        logger.error("Failed to send welcome message")
             elif text.startswith('/help'):
-                # Send help message using direct HTTP request
-                try:
-                    # Use the active token directly
-                    telegram_token = ACTIVE_BOT_TOKEN
-                    response = requests.post(
-                        f"https://api.telegram.org/bot{telegram_token}/sendMessage",
-                        json={"chat_id": chat_id, "text": "I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n📧 Email: Check inbox, send emails, search for messages\n📅 Calendar: View schedule, create events, find free time\n🧠 Memory: Remember information and recall it later\n\nYou can navigate using the keyboard menu or simply tell me what you need help with!"}
-                    )
-                    logger.info(f"Sent help message using HTTP API: {response.status_code}")
-                except Exception as http_error:
-                    logger.error(f"Failed to send help message: {http_error}")
+                # Send help message using our utility function
+                help_msg = "I'm your executive assistant powered by OpenManus. Here's what I can help you with:\n\n📧 Email: Check inbox, send emails, search for messages\n📅 Calendar: View schedule, create events, find free time\n🧠 Memory: Remember information and recall it later\n\nYou can navigate using the keyboard menu or simply tell me what you need help with!"
+                success = send_telegram_message(chat_id, help_msg)
+                if not success:
+                    logger.error("Failed to send help message")
         else:
             # Check if this could be a user ID for account linking
             from models import User
@@ -994,17 +997,11 @@ def process_update(update_data):
                 except Exception as http_error:
                     logger.error(f"Failed to send OpenManus response: {http_error}")
             else:
-                # Send unrecognized account message using direct HTTP request
-                try:
-                    # Use the active token directly
-                    telegram_token = ACTIVE_BOT_TOKEN
-                    response = requests.post(
-                        f"https://api.telegram.org/bot{telegram_token}/sendMessage",
-                        json={"chat_id": chat_id, "text": "I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."}
-                    )
-                    logger.info(f"Sent unrecognized account message using HTTP API: {response.status_code}")
-                except Exception as http_error:
-                    logger.error(f"Failed to send unrecognized account message: {http_error}")
+                # Send unrecognized account message using our utility function
+                unrecognized_msg = "I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
+                success = send_telegram_message(chat_id, unrecognized_msg)
+                if not success:
+                    logger.error("Failed to send unrecognized account message")
 
         return True
     except Exception as e:
