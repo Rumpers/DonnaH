@@ -343,6 +343,15 @@
                                     <strong>Important:</strong> Set up the webhook only after initializing the bot. This allows real-time message processing.
                                 </div>
                                 
+                                {% if current_user.is_admin %}
+                                <div class="mt-4">
+                                    <a href="{{ url_for('manage_telegram_users') }}" class="btn btn-primary">
+                                        <i class="bi bi-people-fill me-2"></i> Manage Telegram Users
+                                    </a>
+                                    <span class="ms-2 text-muted">Manage who can access the Telegram bot</span>
+                                </div>
+                                {% endif %}
+                                
                                 <hr>
                                 
                                 <h5 class="mt-4">Connection Instructions</h5>
