@@ -13,6 +13,26 @@ from werkzeug.security import generate_password_hash, check_password_hash
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
+# Create memory log handler to track recent logs
+class MemoryLogHandler(logging.Handler):
+    def __init__(self, capacity=100):
+        super().__init__()
+        self.capacity = capacity
+        self.logs = []
+        self.formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    
+    def emit(self, record):
+        self.logs.append(record)
+        if len(self.logs) > self.capacity:
+            self.logs = self.logs[-self.capacity:]
+    
+    def get_logs(self):
+        return self.logs
+
+# Add the memory log handler to the logger
+memory_log_handler = MemoryLogHandler(capacity=100)
+logger.addHandler(memory_log_handler)
+
 # Base class for SQLAlchemy models
 class Base(DeclarativeBase):
     pass
@@ -341,7 +361,25 @@ def status():
     manus_active = True  # Assume it's active since we need it for the app
     manus_api_key = bool(config.MANUS_API_KEY)
     memory_system_initialized = True  # Assume it's initialized
-    manus_impl = "OpenAI GPT-4"  # This could be determined based on config
+    manus_model = config.MANUS_MODEL
+    manus_impl = f"OpenAI {manus_model}"
+    
+    # Check if there have been recent Telegram interactions
+    telegram_connected = False
+    has_telegram_users = False
+    
+    try:
+        # Check if any users have Telegram IDs
+        has_telegram_users = db.session.query(User).filter(User.telegram_id.isnot(None)).count() > 0
+        
+        # Look through the logs to see if we've received any Telegram updates recently
+        if memory_log_handler:
+            for record in memory_log_handler.get_logs():
+                if "Received update from Telegram" in record.getMessage():
+                    telegram_connected = True
+                    break
+    except Exception as e:
+        logger.error(f"Error checking Telegram connection status: {str(e)}")
     
     # Environment variables to check
     env_vars = [
