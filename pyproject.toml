@@ -28,6 +28,7 @@ dependencies = [
     "flask-wtf>=1.2.1",
     "trafilatura>=2.0.0",
     "pillow>=11.2.1",
+    "anthropic>=0.50.0",
 ]
 
 [[tool.uv.index]]

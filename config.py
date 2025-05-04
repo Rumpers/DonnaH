@@ -33,6 +33,14 @@ GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 # OpenManus configuration
 MANUS_API_KEY = os.environ.get("MANUS_API_KEY")
 MANUS_API_URL = os.environ.get("MANUS_API_URL", "https://api.openmanus.ai")
+MANUS_MODEL = os.environ.get("MANUS_MODEL", "gpt-4-turbo")
+
+# Available models for selection in UI
+AVAILABLE_MODELS = {
+    "gpt-4-turbo": "GPT-4 Turbo (Default)",
+    "gpt-4": "GPT-4 Standard",
+    "gpt-3.5-turbo": "GPT-3.5 Turbo (Faster)"
+}
 
 # Database configuration
 DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///manus_assistant.db")

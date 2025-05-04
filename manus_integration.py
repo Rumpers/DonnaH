@@ -333,10 +333,13 @@ class RealOpenManus:
                 {"role": "user", "content": prompt}
             ]
             
+            # Get the model from config
+            from config import MANUS_MODEL
+            
             # Call the OpenAI API
             response = await asyncio.to_thread(
                 self.client.chat.completions.create,
-                model="gpt-4-turbo",
+                model=MANUS_MODEL,
                 messages=messages,
                 temperature=0.7,
                 max_tokens=1000
@@ -370,9 +373,12 @@ class RealOpenManus:
                     {"role": "user", "content": prompt}
                 ]
                 
+                # Get the model from config
+                from config import MANUS_MODEL
+                
                 # Call the OpenAI API directly
                 response = self.client.chat.completions.create(
-                    model="gpt-4-turbo",
+                    model=MANUS_MODEL,
                     messages=messages,
                     temperature=0.7,
                     max_tokens=1000
