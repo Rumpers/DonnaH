@@ -962,17 +962,11 @@ def process_update(update_data):
                         from app import db
                         db.session.commit()
 
-                        # Send account linked message using direct HTTP request
-                        try:
-                            # Use the active token directly
-                            telegram_token = ACTIVE_BOT_TOKEN
-                            response = requests.post(
-                                f"https://api.telegram.org/bot{telegram_token}/sendMessage",
-                                json={"chat_id": chat_id, "text": f"Account linked successfully! Welcome, {user.username}!\n\nYou can now use your assistant through Telegram. How can I help you today?"}
-                            )
-                            logger.info(f"Sent account linked message using HTTP API: {response.status_code}")
-                        except Exception as http_error:
-                            logger.error(f"Failed to send account linked message: {http_error}")
+                        # Send account linked message using our utility function
+                        linked_msg = f"Account linked successfully! Welcome, {user.username}!\n\nYou can now use your assistant through Telegram. How can I help you today?"
+                        success = send_telegram_message(chat_id, linked_msg)
+                        if not success:
+                            logger.error("Failed to send account linked message")
                         return True
                 except ValueError:
                     # Not a user ID, just a regular message
@@ -985,17 +979,10 @@ def process_update(update_data):
                 # Process with OpenManus
                 response = manus_process(db_user, text, None)
 
-                # Send OpenManus response using direct HTTP request
-                try:
-                    # Use the active token directly
-                    telegram_token = ACTIVE_BOT_TOKEN
-                    response_obj = requests.post(
-                        f"https://api.telegram.org/bot{telegram_token}/sendMessage",
-                        json={"chat_id": chat_id, "text": response}
-                    )
-                    logger.info(f"Sent OpenManus response using HTTP API: {response_obj.status_code}")
-                except Exception as http_error:
-                    logger.error(f"Failed to send OpenManus response: {http_error}")
+                # Send OpenManus response using our utility function
+                success = send_telegram_message(chat_id, response)
+                if not success:
+                    logger.error("Failed to send OpenManus response")
             else:
                 # Send unrecognized account message using our utility function
                 unrecognized_msg = "I don't recognize your Telegram account. Please register through the web interface or link your account by using the /start command."
