@@ -477,6 +477,10 @@ def status():
         manus_api_key=manus_api_key,
         memory_system_initialized=memory_system_initialized,
         manus_impl=manus_impl,
+        telegram_connected=telegram_connected,
+        has_telegram_users=has_telegram_users,
+        manus_model=manus_model,
+        available_models=config.AVAILABLE_MODELS,
         env_vars=env_vars,
         recent_logs=recent_logs
     )
@@ -759,6 +763,37 @@ def remove_telegram_webhook():
         
     return redirect(url_for('dashboard'))
     
+@app.route('/change_model', methods=['POST'])
+@login_required
+def change_model():
+    """Change the OpenManus model."""
+    # Get the selected model
+    model = request.form.get('model')
+    
+    # Check if the model is valid
+    if model not in config.AVAILABLE_MODELS:
+        flash('Invalid model selected', 'danger')
+        return redirect(url_for('status'))
+    
+    # Update the model in the configuration
+    old_model = config.MANUS_MODEL
+    config.MANUS_MODEL = model
+    
+    # Log the model change
+    logger.info(f"Changed OpenManus model from {old_model} to {model}")
+    
+    # Re-initialize the OpenManus framework
+    try:
+        # Re-initialize OpenManus with the new model
+        from manus_integration import initialize_manus
+        initialize_manus()
+        flash(f'Successfully switched to model: {config.AVAILABLE_MODELS[model]}', 'success')
+    except Exception as e:
+        logger.error(f"Error re-initializing OpenManus: {str(e)}")
+        flash(f'Error switching model: {str(e)}', 'danger')
+    
+    return redirect(url_for('status'))
+
 @app.route('/telegram_webhook', methods=['POST'])
 def telegram_webhook():
     """
