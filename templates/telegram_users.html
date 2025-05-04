@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}Telegram User Management{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Telegram User Management</h2>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+            <h4 class="card-title">Registered Users</h4>
+            <p class="card-text">
+                Manage users that can interact with the Telegram bot. Only users with a linked Telegram ID can use the bot.
+            </p>
+
+            <div class="alert alert-info">
+                <i class="bi bi-info-circle-fill me-2"></i>
+                <strong>Linking Instructions:</strong> Users need to send <code>/start</code> to the bot, then enter their user ID when prompted.
+            </div>
+
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Telegram Status</th>
+                            <th>Telegram ID</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td>{{ user.id }}</td>
+                            <td>{{ user.username }}</td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                {% if user.telegram_id %}
+                                <span class="badge bg-success">Linked</span>
+                                {% else %}
+                                <span class="badge bg-warning text-dark">Not Linked</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ user.telegram_id or 'N/A' }}</td>
+                            <td>
+                                {% if user.telegram_id %}
+                                <form action="{{ url_for('reset_telegram_id', user_id=user.id) }}" method="POST" class="d-inline">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Are you sure you want to unlink this Telegram account?')">
+                                        <i class="bi bi-x-circle me-1"></i> Unlink
+                                    </button>
+                                </form>
+                                {% else %}
+                                <button type="button" class="btn btn-sm btn-outline-secondary" disabled>
+                                    <i class="bi bi-link-45deg me-1"></i> Not Linked
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-body">
+            <h4 class="card-title">Instructions</h4>
+            <ol>
+                <li>Ensure the Telegram bot is initialized (from Dashboard > Telegram Bot).</li>
+                <li>Users must start a conversation with the bot by sending <code>/start</code>.</li>
+                <li>When prompted, users must send their user ID number.</li>
+                <li>Once linked, users can interact with the bot normally.</li>
+                <li>Admins can unlink accounts if needed using the "Unlink" button above.</li>
+            </ol>
+            <div class="alert alert-warning">
+                <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                <strong>Note:</strong> Unlinking a Telegram account requires the user to go through the linking process again.
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

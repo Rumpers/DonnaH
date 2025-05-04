@@ -689,6 +689,39 @@ def inspect_users():
         print(f'User ID: {user.id}, Username: {user.username}, Email: {user.email}')
     return "User information printed to console."
 
+@app.route('/manage_telegram_users')
+@login_required
+def manage_telegram_users():
+    """Display and manage users that can access the Telegram bot."""
+    # Only allow admin users to access this page
+    if not current_user.is_admin:
+        flash('You do not have permission to access this page.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    from models import User
+    users = User.query.all()
+    return render_template('telegram_users.html', users=users)
+
+@app.route('/reset_telegram_id/<int:user_id>', methods=['POST'])
+@login_required
+def reset_telegram_id(user_id):
+    """Reset a user's Telegram ID, unlinking their account."""
+    # Only allow admin users or the user themselves
+    if not current_user.is_admin and current_user.id != user_id:
+        flash('You do not have permission to perform this action.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    from models import User
+    user = User.query.get(user_id)
+    if not user:
+        flash('User not found.', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    user.telegram_id = None
+    db.session.commit()
+    flash(f'Telegram account unlinked for user {user.username}.', 'success')
+    return redirect(url_for('dashboard', _anchor='bot'))
+
 @app.route('/setup_telegram_webhook', methods=['POST'])
 def setup_telegram_webhook():
     """Set up the Telegram webhook."""

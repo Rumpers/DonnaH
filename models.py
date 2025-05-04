@@ -11,6 +11,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256))
     telegram_id = db.Column(db.String(64), unique=True)
     google_credentials = db.Column(Text)
+    is_admin = db.Column(db.Boolean, default=False)  # Admin flag for user management
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
