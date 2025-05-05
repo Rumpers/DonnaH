@@ -224,7 +224,7 @@
                                             <p class="card-text">
                                                 Connect your Telegram account to access your assistant from your mobile device anytime, anywhere.
                                             </p>
-                                            <a href="#telegram" class="btn btn-primary" data-bs-toggle="tab">
+                                            <a href="{{ url_for('dashboard_telegram') }}" class="btn btn-primary">
                                                 <i class="bi bi-telegram me-2"></i> Set Up Telegram
                                             </a>
                                         </div>
@@ -334,7 +334,7 @@
                                                     <strong>Status:</strong> Not connected
                                                 {% endif %}
                                             </p>
-                                            <a href="#telegram" class="btn btn-connect" data-bs-toggle="tab">
+                                            <a href="{{ url_for('dashboard_telegram') }}" class="btn btn-connect">
                                                 <i class="bi bi-telegram me-2"></i> Manage Telegram Connection
                                             </a>
                                         </div>
@@ -587,7 +587,7 @@
                         </div>
                         
                         <!-- System Status Tab -->
-                        <div class="tab-pane fade" id="system-status">
+                        <div class="tab-pane fade {{ 'show active' if active_tab == 'system-status' else '' }}" id="system-status">
                             <h2 class="section-title">System Status</h2>
                             <p class="lead">
                                 Monitor the deployment status, configuration, and health of your OpenManus Assistant.
