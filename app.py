@@ -203,7 +203,7 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    from models import MemoryEntry, Document
+    from models import MemoryEntry, Document, User
     from config import ENVIRONMENT, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ACTIVE_BOT_TOKEN, IS_DEPLOYED
     
     # Get memory and document counts
@@ -222,12 +222,35 @@ def dashboard():
         'has_development_token': bool(BOT_TOKEN_DEVELOPMENT)
     }
     
+    # Get telegram users (for admin view)
+    telegram_users = []
+    if current_user.is_admin:
+        telegram_users = User.query.filter(User.telegram_id.isnot(None)).all()
+    
+    # Get memory entries for the user
+    memories = MemoryEntry.query.filter_by(user_id=current_user.id).order_by(MemoryEntry.created_at.desc()).limit(20).all()
+    
+    # Get documents for the user
+    documents = Document.query.filter_by(user_id=current_user.id).order_by(Document.updated_at.desc()).limit(10).all()
+    
+    # Generate a registration token for Telegram
+    # This is just a simple example, in production you'd want a more secure method
+    registration_token = secrets.token_hex(8)
+    
+    # Get bot username from environment or use default
+    bot_username = os.environ.get("TELEGRAM_BOT_USERNAME", "OpenManus_Assistant_Bot")
+    
     return render_template(
-        'dashboard.html', 
+        'new_dashboard.html',  # Use the new template 
         memory_count=memory_count, 
         document_count=document_count,
         replit_domain=replit_domain,
-        token_info=token_info
+        token_info=token_info,
+        memories=memories,
+        documents=documents,
+        telegram_users=telegram_users,
+        registration_token=registration_token,
+        bot_username=bot_username
     )
 
 @app.route('/start_bot', methods=['POST'])
@@ -544,15 +567,37 @@ def dashboard_direct():
             'has_development_token': bool(BOT_TOKEN_DEVELOPMENT)
         }
         
+        # Get telegram users (for admin view)
+        telegram_users = []
+        if user.is_admin:
+            telegram_users = User.query.filter(User.telegram_id.isnot(None)).all()
+        
+        # Get memory entries for the user
+        memories = MemoryEntry.query.filter_by(user_id=user.id).order_by(MemoryEntry.created_at.desc()).limit(20).all()
+        
+        # Get documents for the user
+        documents = Document.query.filter_by(user_id=user.id).order_by(Document.updated_at.desc()).limit(10).all()
+        
+        # Generate a registration token for Telegram
+        registration_token = secrets.token_hex(8)
+        
+        # Get bot username from environment or use default
+        bot_username = os.environ.get("TELEGRAM_BOT_USERNAME", "OpenManus_Assistant_Bot")
+        
         # Set a flag to indicate this is a direct access (bypass login check)
         is_direct_access = True
         
         return render_template(
-            'dashboard.html', 
+            'new_dashboard.html',  # Use the new template
             memory_count=memory_count, 
             document_count=document_count,
             replit_domain=replit_domain,
             token_info=token_info,
+            memories=memories,
+            documents=documents,
+            telegram_users=telegram_users,
+            registration_token=registration_token,
+            bot_username=bot_username,
             is_direct_access=is_direct_access,
             current_user=user  # Pass the user directly
         )

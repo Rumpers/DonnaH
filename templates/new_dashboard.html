@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - OpenManus Executive Assistant</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/custom.css') }}" rel="stylesheet">
+    <style>
+        body {
+            background-color: #1a1d21;
+            color: #e9ecef;
+        }
+        
+        .sidebar {
+            background-color: #1a1d21;
+            border-right: 1px solid #2d3239;
+            min-height: 100vh;
+            position: fixed;
+            width: 250px;
+        }
+        
+        .content-area {
+            margin-left: 250px;
+            padding: 20px;
+        }
+        
+        .user-profile {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid #2d3239;
+        }
+        
+        .user-avatar {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            background-color: #7952b3;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            margin: 0 auto 15px;
+        }
+        
+        .nav-menu {
+            padding: 0;
+        }
+        
+        .nav-item {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .nav-link {
+            display: flex;
+            align-items: center;
+            padding: 12px 20px;
+            color: #e9ecef;
+            text-decoration: none;
+            border-radius: 0;
+            transition: background-color 0.3s;
+        }
+        
+        .nav-link:hover {
+            background-color: #2d3239;
+        }
+        
+        .nav-link.active {
+            background-color: #7952b3;
+            color: white;
+        }
+        
+        .nav-link i {
+            margin-right: 10px;
+            width: 24px;
+            text-align: center;
+        }
+        
+        .tab-content {
+            background-color: #222529;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+        
+        .section-title {
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        .card {
+            background-color: #2d3239;
+            border: none;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .card-header {
+            background-color: #343a40;
+            border-bottom: none;
+            border-radius: 10px 10px 0 0 !important;
+        }
+        
+        .btn-connect {
+            background-color: #7952b3;
+            border: none;
+        }
+        
+        .btn-connect:hover {
+            background-color: #6742a6;
+        }
+        
+        .status-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-connected {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .badge-disconnected {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- Flash Messages -->
+    <div class="fixed-top m-3">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <div class="container-fluid p-0">
+        <div class="row g-0">
+            <!-- Sidebar -->
+            <div class="col-auto">
+                <div class="sidebar">
+                    <!-- User Profile -->
+                    <div class="user-profile">
+                        <div class="user-avatar">
+                            {{ current_user.username[0] | upper }}
+                        </div>
+                        <h4 class="mb-0">Welcome, {{ current_user.username }}</h4>
+                        <p class="text-muted">{{ current_user.email }}</p>
+                    </div>
+                    
+                    <!-- Navigation Menu -->
+                    <ul class="nav-menu">
+                        <li class="nav-item">
+                            <a href="#overview" class="nav-link active" data-bs-toggle="tab">
+                                <i class="bi bi-speedometer2"></i> Overview
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('chat') }}" class="nav-link">
+                                <i class="bi bi-chat-dots"></i> Web Chat
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#services" class="nav-link" data-bs-toggle="tab">
+                                <i class="bi bi-gear"></i> Connected Services
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#telegram" class="nav-link" data-bs-toggle="tab">
+                                <i class="bi bi-telegram"></i> Telegram Bot
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#memory" class="nav-link" data-bs-toggle="tab">
+                                <i class="bi bi-journal-text"></i> Memory Entries
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#documents" class="nav-link" data-bs-toggle="tab">
+                                <i class="bi bi-file-earmark-text"></i> Documents
+                            </a>
+                        </li>
+                        <li class="nav-item mt-5">
+                            <a href="{{ url_for('status') }}" class="nav-link">
+                                <i class="bi bi-gear-fill"></i> System Status
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="{{ url_for('logout') }}" class="nav-link">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Main Content Area -->
+            <div class="col">
+                <div class="content-area">
+                    <div class="tab-content">
+                        <!-- Overview Tab -->
+                        <div class="tab-pane fade show active" id="overview">
+                            <h2 class="section-title">Dashboard Overview</h2>
+                            <p class="lead">
+                                Welcome to your OpenManus Executive Assistant. Here you can manage your connections and interact with your AI assistant.
+                            </p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="bi bi-robot me-2"></i>Your AI Assistant</h5>
+                                            <p class="card-text">
+                                                Your assistant is powered by advanced AI capabilities and is ready to help you with tasks, information, and more.
+                                            </p>
+                                            <a href="{{ url_for('chat') }}" class="btn btn-primary">
+                                                <i class="bi bi-chat-dots me-2"></i> Chat with DonnaH
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-body">
+                                            <h5 class="card-title"><i class="bi bi-telegram me-2"></i>Telegram Access</h5>
+                                            <p class="card-text">
+                                                Connect your Telegram account to access your assistant from your mobile device anytime, anywhere.
+                                            </p>
+                                            <a href="#telegram" class="btn btn-primary" data-bs-toggle="tab">
+                                                <i class="bi bi-telegram me-2"></i> Set Up Telegram
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-4">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            <h1 class="display-4">{{ memory_count|default(0) }}</h1>
+                                            <p class="lead">Memory Entries</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            <h1 class="display-4">{{ document_count|default(0) }}</h1>
+                                            <p class="lead">Documents</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="card text-center">
+                                        <div class="card-body">
+                                            {% set service_count = 0 %}
+                                            {% if current_user.google_credentials %}
+                                                {% set service_count = service_count + 1 %}
+                                            {% endif %}
+                                            {% if current_user.telegram_id %}
+                                                {% set service_count = service_count + 1 %}
+                                            {% endif %}
+                                            <h1 class="display-4">{{ service_count }}/2</h1>
+                                            <p class="lead">Connected Services</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Connected Services Tab -->
+                        <div class="tab-pane fade" id="services">
+                            <h2 class="section-title">Connected Services</h2>
+                            <p class="lead">
+                                Connect various services to enhance your assistant's capabilities and access to your data.
+                            </p>
+                            
+                            <div class="row mt-4">
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0"><i class="bi bi-google me-2"></i>Google Services</h5>
+                                            {% if current_user.google_credentials %}
+                                                <span class="status-badge badge-connected">Connected</span>
+                                            {% else %}
+                                                <span class="status-badge badge-disconnected">Not Connected</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="card-text">
+                                                Connect to access Gmail, Google Calendar, and Google Drive integration.
+                                            </p>
+                                            <ul class="list-group list-group-flush mb-3">
+                                                <li class="list-group-item bg-transparent">
+                                                    <i class="bi bi-envelope me-2"></i> Gmail
+                                                </li>
+                                                <li class="list-group-item bg-transparent">
+                                                    <i class="bi bi-calendar3 me-2"></i> Google Calendar
+                                                </li>
+                                                <li class="list-group-item bg-transparent">
+                                                    <i class="bi bi-cloud me-2"></i> Google Drive
+                                                </li>
+                                            </ul>
+                                            {% if current_user.google_credentials %}
+                                                <a href="{{ url_for('google_auth.disconnect') }}" class="btn btn-outline-danger">
+                                                    <i class="bi bi-x-circle me-2"></i> Disconnect
+                                                </a>
+                                            {% else %}
+                                                <a href="{{ url_for('google_auth.login') }}" class="btn btn-connect">
+                                                    <i class="bi bi-google me-2"></i> Connect Google Account
+                                                </a>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-6">
+                                    <div class="card mb-4">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0"><i class="bi bi-telegram me-2"></i>Telegram</h5>
+                                            {% if current_user.telegram_id %}
+                                                <span class="status-badge badge-connected">Connected</span>
+                                            {% else %}
+                                                <span class="status-badge badge-disconnected">Not Connected</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-body">
+                                            <p class="card-text">
+                                                Access your assistant from Telegram for mobile conversations.
+                                            </p>
+                                            <p>
+                                                {% if current_user.telegram_id %}
+                                                    <strong>Telegram ID:</strong> {{ current_user.telegram_id }}
+                                                {% else %}
+                                                    <strong>Status:</strong> Not connected
+                                                {% endif %}
+                                            </p>
+                                            <a href="#telegram" class="btn btn-connect" data-bs-toggle="tab">
+                                                <i class="bi bi-telegram me-2"></i> Manage Telegram Connection
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Telegram Bot Tab -->
+                        <div class="tab-pane fade" id="telegram">
+                            <h2 class="section-title">Telegram Bot</h2>
+                            <p class="lead">
+                                Connect to your assistant through Telegram for on-the-go access.
+                            </p>
+                            
+                            <div class="card mb-4">
+                                <div class="card-body">
+                                    <h5 class="card-title">Connect Your Telegram Account</h5>
+                                    
+                                    {% if current_user.telegram_id %}
+                                        <div class="alert alert-success">
+                                            <i class="bi bi-check-circle-fill me-2"></i>
+                                            Your Telegram account is connected. You can chat with DonnaH on Telegram!
+                                        </div>
+                                        
+                                        <p><strong>Your Telegram ID:</strong> {{ current_user.telegram_id }}</p>
+                                        
+                                        <div class="mt-4">
+                                            <form action="{{ url_for('reset_telegram_id', user_id=current_user.id) }}" method="POST">
+                                                <button type="submit" class="btn btn-danger">
+                                                    <i class="bi bi-x-circle me-2"></i> Disconnect Telegram
+                                                </button>
+                                            </form>
+                                        </div>
+                                    {% else %}
+                                        <div class="alert alert-info">
+                                            <i class="bi bi-info-circle-fill me-2"></i>
+                                            Connect your Telegram account to chat with DonnaH on mobile.
+                                        </div>
+                                        
+                                        <h6 class="mt-4">How to connect:</h6>
+                                        <ol>
+                                            <li>Open Telegram and search for <code>@{{ bot_username|default('OpenManus_Assistant_Bot') }}</code></li>
+                                            <li>Start a conversation with the bot by sending <code>/start</code></li>
+                                            <li>Send the following registration code to the bot: <code>{{ current_user.id }}_{{ registration_token|default('REGISTRATION_TOKEN') }}</code></li>
+                                            <li>Once connected, you'll receive a confirmation message</li>
+                                        </ol>
+                                        
+                                        <div class="d-grid gap-2 col-6 mx-auto mt-4">
+                                            <a href="https://t.me/{{ bot_username|default('OpenManus_Assistant_Bot') }}" class="btn btn-primary btn-lg" target="_blank">
+                                                <i class="bi bi-telegram me-2"></i> Open in Telegram
+                                            </a>
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            
+                            {% if current_user.is_admin %}
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Telegram Bot Management (Admin)</h5>
+                                </div>
+                                <div class="card-body">
+                                    <h6>Connected Users</h6>
+                                    <div class="table-responsive">
+                                        <table class="table table-dark">
+                                            <thead>
+                                                <tr>
+                                                    <th>Username</th>
+                                                    <th>Email</th>
+                                                    <th>Telegram ID</th>
+                                                    <th>Actions</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {% for user in telegram_users %}
+                                                <tr>
+                                                    <td>{{ user.username }}</td>
+                                                    <td>{{ user.email }}</td>
+                                                    <td>{{ user.telegram_id }}</td>
+                                                    <td>
+                                                        <form action="{{ url_for('reset_telegram_id', user_id=user.id) }}" method="POST">
+                                                            <button type="submit" class="btn btn-sm btn-danger">
+                                                                <i class="bi bi-x-circle"></i> Disconnect
+                                                            </button>
+                                                        </form>
+                                                    </td>
+                                                </tr>
+                                                {% else %}
+                                                <tr>
+                                                    <td colspan="4" class="text-center">No users connected to Telegram</td>
+                                                </tr>
+                                                {% endfor %}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Memory Entries Tab -->
+                        <div class="tab-pane fade" id="memory">
+                            <h2 class="section-title">Memory Entries</h2>
+                            <p class="lead">
+                                View and manage your assistant's memory and stored information.
+                            </p>
+                            
+                            <div class="row">
+                                <div class="col-md-4 mb-4">
+                                    <div class="card">
+                                        <div class="card-header">
+                                            <h5 class="mb-0">Memory Categories</h5>
+                                        </div>
+                                        <div class="card-body">
+                                            <div class="list-group">
+                                                <a href="#" class="list-group-item list-group-item-action bg-transparent active" onclick="filterMemories('all')">
+                                                    All Memories
+                                                </a>
+                                                <a href="#" class="list-group-item list-group-item-action bg-transparent" onclick="filterMemories('person')">
+                                                    <i class="bi bi-person me-2"></i> People
+                                                </a>
+                                                <a href="#" class="list-group-item list-group-item-action bg-transparent" onclick="filterMemories('project')">
+                                                    <i class="bi bi-kanban me-2"></i> Projects
+                                                </a>
+                                                <a href="#" class="list-group-item list-group-item-action bg-transparent" onclick="filterMemories('event')">
+                                                    <i class="bi bi-calendar-event me-2"></i> Events
+                                                </a>
+                                                <a href="#" class="list-group-item list-group-item-action bg-transparent" onclick="filterMemories('note')">
+                                                    <i class="bi bi-sticky me-2"></i> Notes
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <div class="col-md-8">
+                                    <div class="card">
+                                        <div class="card-header d-flex justify-content-between align-items-center">
+                                            <h5 class="mb-0">Memory Entries</h5>
+                                            <div class="input-group" style="max-width: 300px;">
+                                                <input type="text" class="form-control" placeholder="Search memories..." id="memory-search">
+                                                <button class="btn btn-outline-secondary" type="button">
+                                                    <i class="bi bi-search"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div class="card-body" style="max-height: 500px; overflow-y: auto;">
+                                            <div id="memory-list">
+                                                {% if memories %}
+                                                    {% for memory in memories %}
+                                                    <div class="card mb-3 memory-item" data-type="{{ memory.entry_type }}">
+                                                        <div class="card-body">
+                                                            <h5 class="card-title">{{ memory.title }}</h5>
+                                                            <h6 class="card-subtitle mb-2 text-muted">
+                                                                {% if memory.entry_type == 'person' %}
+                                                                <i class="bi bi-person me-1"></i>
+                                                                {% elif memory.entry_type == 'project' %}
+                                                                <i class="bi bi-kanban me-1"></i>
+                                                                {% elif memory.entry_type == 'event' %}
+                                                                <i class="bi bi-calendar-event me-1"></i>
+                                                                {% elif memory.entry_type == 'note' %}
+                                                                <i class="bi bi-sticky me-1"></i>
+                                                                {% else %}
+                                                                <i class="bi bi-journal-text me-1"></i>
+                                                                {% endif %}
+                                                                {{ memory.entry_type|capitalize }}
+                                                            </h6>
+                                                            <p class="card-text">{{ memory.content|truncate(100) }}</p>
+                                                            <small class="text-muted">Created: {{ memory.created_at.strftime('%Y-%m-%d') }}</small>
+                                                        </div>
+                                                    </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    <div class="text-center p-5">
+                                                        <i class="bi bi-journal-text display-1 text-muted"></i>
+                                                        <p class="mt-3">No memory entries yet. Your assistant will create memories as you interact.</p>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Documents Tab -->
+                        <div class="tab-pane fade" id="documents">
+                            <h2 class="section-title">Documents</h2>
+                            <p class="lead">
+                                Access and manage documents processed by your assistant.
+                            </p>
+                            
+                            {% if current_user.google_credentials %}
+                                <div class="card mb-4">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Google Drive Integration</h5>
+                                        <p class="card-text">
+                                            Your assistant can access, analyze, and manage documents from your Google Drive.
+                                        </p>
+                                        
+                                        <div class="table-responsive mt-4">
+                                            <table class="table table-dark">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Title</th>
+                                                        <th>Type</th>
+                                                        <th>Last Modified</th>
+                                                        <th>Actions</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    {% if documents %}
+                                                        {% for doc in documents %}
+                                                        <tr>
+                                                            <td>{{ doc.title }}</td>
+                                                            <td>{{ doc.file_type }}</td>
+                                                            <td>{{ doc.updated_at.strftime('%Y-%m-%d') }}</td>
+                                                            <td>
+                                                                <button class="btn btn-sm btn-primary">
+                                                                    <i class="bi bi-eye"></i> View
+                                                                </button>
+                                                            </td>
+                                                        </tr>
+                                                        {% endfor %}
+                                                    {% else %}
+                                                        <tr>
+                                                            <td colspan="4" class="text-center">No documents processed yet</td>
+                                                        </tr>
+                                                    {% endif %}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <div class="card mb-4">
+                                    <div class="card-body text-center p-5">
+                                        <i class="bi bi-cloud-slash display-1 text-muted mb-3"></i>
+                                        <h4>Google Drive Not Connected</h4>
+                                        <p class="card-text">
+                                            Connect your Google account to access and manage documents through your assistant.
+                                        </p>
+                                        <a href="{{ url_for('google_auth.login') }}" class="btn btn-connect btn-lg mt-3">
+                                            <i class="bi bi-google me-2"></i> Connect Google Account
+                                        </a>
+                                    </div>
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript Bundle with Popper -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Memory filtering
+        function filterMemories(type) {
+            const items = document.querySelectorAll('.memory-item');
+            items.forEach(item => {
+                if (type === 'all' || item.getAttribute('data-type') === type) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+            
+            // Update active state in filter list
+            document.querySelectorAll('.list-group-item').forEach(el => {
+                el.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+        }
+        
+        // Memory search
+        document.getElementById('memory-search').addEventListener('input', function() {
+            const searchTerm = this.value.toLowerCase();
+            const items = document.querySelectorAll('.memory-item');
+            
+            items.forEach(item => {
+                const title = item.querySelector('.card-title').textContent.toLowerCase();
+                const content = item.querySelector('.card-text').textContent.toLowerCase();
+                
+                if (title.includes(searchTerm) || content.includes(searchTerm)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
