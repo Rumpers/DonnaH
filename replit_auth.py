@@ -161,6 +161,8 @@ def require_login(f):
 
     @wraps(f)
     def decorated_function(*args, **kwargs):
+        issuer_url = os.environ.get('ISSUER_URL', "https://replit.com/oidc")
+        
         if not current_user.is_authenticated:
             session["next_url"] = get_next_navigation_url(request)
             return redirect(url_for('replit_auth.login'))
