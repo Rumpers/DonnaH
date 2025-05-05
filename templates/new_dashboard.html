@@ -148,7 +148,7 @@
                     <!-- Navigation Menu -->
                     <ul class="nav-menu">
                         <li class="nav-item">
-                            <a href="#overview" class="nav-link active" data-bs-toggle="tab">
+                            <a href="{{ url_for('dashboard') }}" class="nav-link {{ 'active' if active_tab == 'overview' else '' }}">
                                 <i class="bi bi-speedometer2"></i> Overview
                             </a>
                         </li>
@@ -158,27 +158,27 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#services" class="nav-link" data-bs-toggle="tab">
+                            <a href="{{ url_for('dashboard_services') }}" class="nav-link {{ 'active' if active_tab == 'services' else '' }}">
                                 <i class="bi bi-gear"></i> Connected Services
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#telegram" class="nav-link" data-bs-toggle="tab">
+                            <a href="{{ url_for('dashboard_telegram') }}" class="nav-link {{ 'active' if active_tab == 'telegram' else '' }}">
                                 <i class="bi bi-telegram"></i> Telegram Bot
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#memory" class="nav-link" data-bs-toggle="tab">
+                            <a href="{{ url_for('dashboard_memory') }}" class="nav-link {{ 'active' if active_tab == 'memory' else '' }}">
                                 <i class="bi bi-journal-text"></i> Memory Entries
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="#documents" class="nav-link" data-bs-toggle="tab">
+                            <a href="{{ url_for('dashboard_documents') }}" class="nav-link {{ 'active' if active_tab == 'documents' else '' }}">
                                 <i class="bi bi-file-earmark-text"></i> Documents
                             </a>
                         </li>
                         <li class="nav-item mt-5">
-                            <a href="#system-status" class="nav-link" data-bs-toggle="tab">
+                            <a href="{{ url_for('dashboard_status') }}" class="nav-link {{ 'active' if active_tab == 'system-status' else '' }}">
                                 <i class="bi bi-gear-fill"></i> System Status
                             </a>
                         </li>
@@ -196,7 +196,7 @@
                 <div class="content-area">
                     <div class="tab-content">
                         <!-- Overview Tab -->
-                        <div class="tab-pane fade show active" id="overview">
+                        <div class="tab-pane fade {{ 'show active' if active_tab == 'overview' else '' }}" id="overview">
                             <h2 class="section-title">Dashboard Overview</h2>
                             <p class="lead">
                                 Welcome to your OpenManus Executive Assistant. Here you can manage your connections and interact with your AI assistant.
@@ -268,7 +268,7 @@
                         </div>
                         
                         <!-- Connected Services Tab -->
-                        <div class="tab-pane fade" id="services">
+                        <div class="tab-pane fade {{ 'show active' if active_tab == 'services' else '' }}" id="services">
                             <h2 class="section-title">Connected Services</h2>
                             <p class="lead">
                                 Connect various services to enhance your assistant's capabilities and access to your data.
@@ -344,7 +344,7 @@
                         </div>
                         
                         <!-- Telegram Bot Tab -->
-                        <div class="tab-pane fade" id="telegram">
+                        <div class="tab-pane fade {{ 'show active' if active_tab == 'telegram' else '' }}" id="telegram">
                             <h2 class="section-title">Telegram Bot</h2>
                             <p class="lead">
                                 Connect to your assistant through Telegram for on-the-go access.
@@ -437,7 +437,7 @@
                         </div>
                         
                         <!-- Memory Entries Tab -->
-                        <div class="tab-pane fade" id="memory">
+                        <div class="tab-pane fade {{ 'show active' if active_tab == 'memory' else '' }}" id="memory">
                             <h2 class="section-title">Memory Entries</h2>
                             <p class="lead">
                                 View and manage your assistant's memory and stored information.
@@ -522,7 +522,7 @@
                         </div>
                         
                         <!-- Documents Tab -->
-                        <div class="tab-pane fade" id="documents">
+                        <div class="tab-pane fade {{ 'show active' if active_tab == 'documents' else '' }}" id="documents">
                             <h2 class="section-title">Documents</h2>
                             <p class="lead">
                                 Access and manage documents processed by your assistant.

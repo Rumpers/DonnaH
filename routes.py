@@ -36,6 +36,40 @@ def index():
 @require_login
 def dashboard():
     """Dashboard view with tabs for different functionality"""
+    return dashboard_common(active_tab='overview')
+
+@app.route('/dashboard/services')
+@require_login
+def dashboard_services():
+    """Dashboard view with connected services tab active"""
+    return dashboard_common(active_tab='services')
+
+@app.route('/dashboard/telegram')
+@require_login
+def dashboard_telegram():
+    """Dashboard view with telegram tab active"""
+    return dashboard_common(active_tab='telegram')
+
+@app.route('/dashboard/memory')
+@require_login
+def dashboard_memory():
+    """Dashboard view with memory entries tab active"""
+    return dashboard_common(active_tab='memory')
+
+@app.route('/dashboard/documents')
+@require_login
+def dashboard_documents():
+    """Dashboard view with documents tab active"""
+    return dashboard_common(active_tab='documents')
+
+@app.route('/dashboard/status')
+@require_login
+def dashboard_status():
+    """Dashboard view with system status tab active"""
+    return dashboard_common(active_tab='system-status')
+
+def dashboard_common(active_tab='overview'):
+    """Common function to render dashboard with different active tabs"""
     # Get memory and document counts
     memory_count = MemoryEntry.query.filter_by(user_id=current_user.id).count()
     document_count = Document.query.filter_by(user_id=current_user.id).count()
@@ -100,6 +134,7 @@ def dashboard():
     
     return render_template(
         'new_dashboard.html',  # Use the new template 
+        active_tab=active_tab,
         memory_count=memory_count, 
         document_count=document_count,
         replit_domain=replit_domain,
