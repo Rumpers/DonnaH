@@ -1,15 +1,18 @@
 import os
 import logging
-from app import app
 import config
-import routes  # Import routes to register blueprints
 
-# Set up logging - more detailed in development, concise in production
+# Configure logging first
 logging.basicConfig(
     level=logging.INFO if config.IS_DEPLOYED else logging.DEBUG,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s' if config.IS_DEPLOYED else '%(levelname)s:%(name)s:%(message)s'
 )
 logger = logging.getLogger(__name__)
+
+# Import app after logging is configured
+from app import app
+# Import routes after app to register blueprints
+import routes
 
 # Log startup information
 logger.info(f"Starting application in {config.ENVIRONMENT.upper()} mode")

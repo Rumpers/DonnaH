@@ -1,6 +1,7 @@
 import os
 import logging
 import secrets
+import json
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -95,209 +96,8 @@ def load_user(user_id):
     # No need to convert to int for Replit Auth since user_id is a string
     return User.query.get(user_id)
 
-# Routes
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-@app.route('/auth', methods=['GET'])
-def auth():
-    return render_template('auth.html')
-
-@app.route('/login', methods=['POST'])
-def login():
-    from models import User
-    
-    email = request.form.get('email')
-    password = request.form.get('password')
-    
-    user = User.query.filter_by(email=email).first()
-    
-    if user and check_password_hash(user.password_hash, password):
-        login_user(user)
-        session['user_id'] = user.id
-        flash('Login successful!', 'success')
-        return redirect(url_for('dashboard'))
-    else:
-        flash('Invalid email or password. Please try again.', 'danger')
-        return redirect(url_for('auth'))
-
-@app.route('/register', methods=['POST'])
-def register():
-    from models import User
-    
-    logger.debug("Registration form submitted")
-    
-    # Log all form data to troubleshoot
-    form_data = dict(request.form)
-    # Remove password from logs for security
-    if 'password' in form_data:
-        form_data['password'] = '********'
-    if 'confirm_password' in form_data:
-        form_data['confirm_password'] = '********'
-    logger.debug(f"All form data: {form_data}")
-    
-    username = request.form.get('username')
-    email = request.form.get('email')
-    password = request.form.get('password')
-    confirm_password = request.form.get('confirm_password')
-    
-    logger.debug(f"Form data: username={username}, email={email}")
-    
-    # Validate form data
-    if not all([username, email, password, confirm_password]):
-        logger.warning("Missing required fields in registration form")
-        flash('All fields are required.', 'danger')
-        return redirect(url_for('auth'))
-    
-    if password != confirm_password:
-        logger.warning("Passwords do not match in registration form")
-        flash('Passwords do not match.', 'danger')
-        return redirect(url_for('auth'))
-    
-    # Check if user already exists
-    existing_user = User.query.filter_by(email=email).first()
-    if existing_user:
-        logger.info(f"Email {email} already registered")
-        flash('Email already registered. Please login instead.', 'warning')
-        return redirect(url_for('auth'))
-    
-    try:
-        # Create new user
-        new_user = User(
-            username=username, 
-            email=email, 
-            password_hash=generate_password_hash(password)
-        )
-        
-        logger.debug(f"Created new user object: {new_user}")
-        
-        db.session.add(new_user)
-        db.session.commit()
-        logger.debug(f"User committed to database with ID: {new_user.id}")
-        
-        # Log the user in
-        login_successful = login_user(new_user)
-        logger.debug(f"login_user result: {login_successful}")
-        
-        session['user_id'] = new_user.id
-        logger.debug(f"Session user_id set to: {session.get('user_id')}")
-        
-        logger.info(f"User {username} (ID: {new_user.id}) registered successfully")
-        flash('Registration successful! Welcome to OpenManus Assistant.', 'success')
-        
-        # Debug current_user after login
-        logger.debug(f"current_user.is_authenticated: {current_user.is_authenticated}")
-        logger.debug(f"current_user.id: {current_user.id if current_user.is_authenticated else 'Not authenticated'}")
-        
-        return redirect(url_for('dashboard'))
-    except Exception as e:
-        logger.error(f"Error during registration: {str(e)}")
-        db.session.rollback()
-        flash(f'An error occurred during registration: {str(e)}', 'danger')
-        return redirect(url_for('auth'))
-
-@app.route('/logout')
-def logout():
-    # Redirects to Replit Auth logout when using Replit Auth
-    return redirect(url_for('replit_auth.logout'))
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    from models import MemoryEntry, Document, User
-    from config import (
-        ENVIRONMENT, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, 
-        ACTIVE_BOT_TOKEN, IS_DEPLOYED, MANUS_MODEL, AVAILABLE_MODELS
-    )
-    
-    # Get memory and document counts
-    memory_count = MemoryEntry.query.filter_by(user_id=current_user.id).count()
-    document_count = Document.query.filter_by(user_id=current_user.id).count()
-    
-    # Get the Replit domain for Google OAuth redirect URI
-    replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
-    
-    # Determine which token is being used
-    token_info = {
-        'environment': ENVIRONMENT,
-        'is_deployed': IS_DEPLOYED,
-        'using_production_token': ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION,
-        'has_production_token': bool(BOT_TOKEN_PRODUCTION),
-        'has_development_token': bool(BOT_TOKEN_DEVELOPMENT)
-    }
-    
-    # Get telegram users (for admin view)
-    telegram_users = []
-    if current_user.is_admin:
-        telegram_users = User.query.filter(User.telegram_id.isnot(None)).all()
-    
-    # Get memory entries for the user
-    memories = MemoryEntry.query.filter_by(user_id=current_user.id).order_by(MemoryEntry.created_at.desc()).limit(20).all()
-    
-    # Get documents for the user
-    documents = Document.query.filter_by(user_id=current_user.id).order_by(Document.updated_at.desc()).limit(10).all()
-    
-    # Generate a registration token for Telegram
-    # This is just a simple example, in production you'd want a more secure method
-    registration_token = secrets.token_hex(8)
-    
-    # Get bot username from environment or use default
-    bot_username = os.environ.get("TELEGRAM_BOT_USERNAME", "OpenManus_Assistant_Bot")
-    
-    # Check if the bot is active
-    bot_active = bool(ACTIVE_BOT_TOKEN)
-    
-    # Check if the bot matches environment
-    environment_token_match = (
-        (ENVIRONMENT == 'production' and ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION) or
-        (ENVIRONMENT == 'development' and ACTIVE_BOT_TOKEN == BOT_TOKEN_DEVELOPMENT)
-    )
-    
-    # Status for webhooks
-    webhook_set = False
-    if replit_domain and bot_active:
-        webhook_url = f"https://{replit_domain}/telegram_webhook"
-        webhook_set = True  # Assume it's set since we auto-setup on init
-    
-    # Check if there have been recent Telegram interactions
-    telegram_connected = False
-    has_telegram_users = User.query.filter(User.telegram_id.isnot(None)).count() > 0
-    
-    # Check debugging status
-    debug_mode = app.debug
-    
-    # OpenManus status
-    manus_active = True  # Assume it's active
-    manus_api_key = bool(os.environ.get("OPENAI_API_KEY"))
-    memory_system_initialized = True
-    manus_impl = f"OpenAI {MANUS_MODEL}"
-    
-    return render_template(
-        'new_dashboard.html',  # Use the new template 
-        memory_count=memory_count, 
-        document_count=document_count,
-        replit_domain=replit_domain,
-        token_info=token_info,
-        memories=memories,
-        documents=documents,
-        telegram_users=telegram_users,
-        registration_token=registration_token,
-        bot_username=bot_username,
-        # Status information
-        bot_active=bot_active,
-        webhook_set=webhook_set,
-        environment_token_match=environment_token_match,
-        telegram_connected=telegram_connected,
-        has_telegram_users=has_telegram_users,
-        debug_mode=debug_mode,
-        manus_active=manus_active,
-        manus_api_key=manus_api_key,
-        memory_system_initialized=memory_system_initialized,
-        manus_impl=manus_impl,
-        manus_model=MANUS_MODEL,
-        available_models=AVAILABLE_MODELS
-    )
+# Routes - Now moved to routes.py
+# Check app.py for utility functions
 
 @app.route('/start_bot', methods=['POST'])
 @login_required
@@ -1054,18 +854,8 @@ def telegram_webhook():
         logger.error(f"Error processing Telegram update: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
         
-@app.route('/chat')
-@login_required
-def chat():
-    """
-    Web interface for chatting with OpenManus (donnah).
-    This provides a browser-based alternative to the Telegram bot.
-    """
-    return render_template('chat.html')
-
-@app.route('/process_chat', methods=['POST'])
-@login_required
-def process_chat():
+# Chat routes moved to routes.py
+def process_chat_helper():
     """
     Process chat messages from the web interface.
     """
