@@ -84,6 +84,7 @@ from google_auth import google_auth  # Import the Google OAuth blueprint
 
 # Register blueprints
 app.register_blueprint(google_auth)
+# Note: Replit Auth blueprint is registered in routes.py
 
 # User loader for Flask-Login
 @login_manager.user_loader
@@ -196,11 +197,8 @@ def register():
 
 @app.route('/logout')
 def logout():
-    logout_user()
-    if 'user_id' in session:
-        session.pop('user_id')
-    flash('You have been logged out.', 'info')
-    return redirect(url_for('index'))
+    # Redirects to Replit Auth logout when using Replit Auth
+    return redirect(url_for('replit_auth.logout'))
 
 @app.route('/dashboard')
 @login_required
