@@ -56,45 +56,30 @@
                             <!-- Left Column - Login -->
                             <div class="col-md-6 p-4 border-end">
                                 <h2 class="mb-4">Login</h2>
-                                <form action="{{ url_for('login') }}" method="POST">
-                                    <div class="mb-3">
-                                        <label for="login-email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="login-email" name="email" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="login-password" class="form-label">Password</label>
-                                        <input type="password" class="form-control" id="login-password" name="password" required>
-                                    </div>
-                                    <div class="mb-3 form-check">
-                                        <input type="checkbox" class="form-check-input" id="remember-me" name="remember_me">
-                                        <label class="form-check-label" for="remember-me">Remember me</label>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary w-100">Login</button>
-                                </form>
+                                <a href="{{ url_for('replit_auth.login') }}" class="btn btn-primary btn-lg w-100">
+                                    <i class="bi bi-box-arrow-in-right me-2"></i> Login with Replit
+                                </a>
+                                <div class="text-center mt-3">
+                                    <small class="text-muted">Securely sign in using your Replit account</small>
+                                </div>
                             </div>
                             
-                            <!-- Right Column - Register -->
+                            <!-- Right Column - Information -->
                             <div class="col-md-6 p-4">
-                                <h2 class="mb-4">Register</h2>
-                                <form action="{{ url_for('register') }}" method="POST">
-                                    <div class="mb-3">
-                                        <label for="register-username" class="form-label">Username</label>
-                                        <input type="text" class="form-control" id="register-username" name="username" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="register-email" class="form-label">Email</label>
-                                        <input type="email" class="form-control" id="register-email" name="email" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="register-password" class="form-label">Password</label>
-                                        <input type="password" class="form-control" id="register-password" name="password" required>
-                                    </div>
-                                    <div class="mb-3">
-                                        <label for="register-confirm-password" class="form-label">Confirm Password</label>
-                                        <input type="password" class="form-control" id="register-confirm-password" name="confirm_password" required>
-                                    </div>
-                                    <button type="submit" class="btn btn-primary w-100">Register</button>
-                                </form>
+                                <h2 class="mb-4">About OpenManus</h2>
+                                <div class="alert alert-info">
+                                    <p><i class="bi bi-info-circle-fill me-2"></i> <strong>Welcome to OpenManus!</strong></p>
+                                    <p>Your personal AI executive assistant powered by cutting-edge technology.</p>
+                                </div>
+                                <div class="mt-4">
+                                    <h5>Features:</h5>
+                                    <ul class="list-group list-group-flush">
+                                        <li class="list-group-item bg-transparent"><i class="bi bi-check-circle me-2"></i> Web and Telegram chat</li>
+                                        <li class="list-group-item bg-transparent"><i class="bi bi-check-circle me-2"></i> Google services integration</li>
+                                        <li class="list-group-item bg-transparent"><i class="bi bi-check-circle me-2"></i> Document management</li>
+                                        <li class="list-group-item bg-transparent"><i class="bi bi-check-circle me-2"></i> Secure Replit authentication</li>
+                                    </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
