@@ -1,6 +1,7 @@
 import jwt
 import os
 import uuid
+import logging
 from functools import wraps
 from urllib.parse import urlencode
 
@@ -19,7 +20,11 @@ from werkzeug.local import LocalProxy
 from app import app, db
 from models import OAuth, User
 
-login_manager = LoginManager(app)
+# Set up logging
+logger = logging.getLogger(__name__)
+
+# Using existing login_manager from app.py - don't initialize a new one
+from app import login_manager
 
 
 @login_manager.user_loader

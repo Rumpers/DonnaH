@@ -53,14 +53,16 @@ else:
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
 
-# Initialize LoginManager - will be replaced by Replit Auth
-# Keep this in place temporarily for compatibility
+# Initialize LoginManager for Replit Auth
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'replit_auth.login'  # Updated to use Replit Auth
+login_manager.login_view = 'replit_auth.login'  # Point to Replit Auth login route
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "warning"
 login_manager.session_protection = "strong"
+
+# Log to make sure LoginManager is initialized properly
+logger.info("LoginManager initialized with login_view='replit_auth.login'")
 
 # Configure database
 app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///manus_assistant.db")
