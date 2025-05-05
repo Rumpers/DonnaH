@@ -204,7 +204,10 @@ def logout():
 @login_required
 def dashboard():
     from models import MemoryEntry, Document, User
-    from config import ENVIRONMENT, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ACTIVE_BOT_TOKEN, IS_DEPLOYED
+    from config import (
+        ENVIRONMENT, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, 
+        ACTIVE_BOT_TOKEN, IS_DEPLOYED, MANUS_MODEL, AVAILABLE_MODELS
+    )
     
     # Get memory and document counts
     memory_count = MemoryEntry.query.filter_by(user_id=current_user.id).count()
@@ -240,6 +243,34 @@ def dashboard():
     # Get bot username from environment or use default
     bot_username = os.environ.get("TELEGRAM_BOT_USERNAME", "OpenManus_Assistant_Bot")
     
+    # Check if the bot is active
+    bot_active = bool(ACTIVE_BOT_TOKEN)
+    
+    # Check if the bot matches environment
+    environment_token_match = (
+        (ENVIRONMENT == 'production' and ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION) or
+        (ENVIRONMENT == 'development' and ACTIVE_BOT_TOKEN == BOT_TOKEN_DEVELOPMENT)
+    )
+    
+    # Status for webhooks
+    webhook_set = False
+    if replit_domain and bot_active:
+        webhook_url = f"https://{replit_domain}/telegram_webhook"
+        webhook_set = True  # Assume it's set since we auto-setup on init
+    
+    # Check if there have been recent Telegram interactions
+    telegram_connected = False
+    has_telegram_users = User.query.filter(User.telegram_id.isnot(None)).count() > 0
+    
+    # Check debugging status
+    debug_mode = app.debug
+    
+    # OpenManus status
+    manus_active = True  # Assume it's active
+    manus_api_key = bool(os.environ.get("OPENAI_API_KEY"))
+    memory_system_initialized = True
+    manus_impl = f"OpenAI {MANUS_MODEL}"
+    
     return render_template(
         'new_dashboard.html',  # Use the new template 
         memory_count=memory_count, 
@@ -250,7 +281,20 @@ def dashboard():
         documents=documents,
         telegram_users=telegram_users,
         registration_token=registration_token,
-        bot_username=bot_username
+        bot_username=bot_username,
+        # Status information
+        bot_active=bot_active,
+        webhook_set=webhook_set,
+        environment_token_match=environment_token_match,
+        telegram_connected=telegram_connected,
+        has_telegram_users=has_telegram_users,
+        debug_mode=debug_mode,
+        manus_active=manus_active,
+        manus_api_key=manus_api_key,
+        memory_system_initialized=memory_system_initialized,
+        manus_impl=manus_impl,
+        manus_model=MANUS_MODEL,
+        available_models=AVAILABLE_MODELS
     )
 
 @app.route('/start_bot', methods=['POST'])
@@ -542,7 +586,10 @@ def get_logs():
 def dashboard_direct():
     """A version of the dashboard without the @login_required decorator for testing"""
     from models import MemoryEntry, Document, User
-    from config import ENVIRONMENT, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ACTIVE_BOT_TOKEN, IS_DEPLOYED
+    from config import (
+        ENVIRONMENT, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, 
+        ACTIVE_BOT_TOKEN, IS_DEPLOYED, MANUS_MODEL, AVAILABLE_MODELS
+    )
     
     try:
         # Get the first user for testing
@@ -584,6 +631,34 @@ def dashboard_direct():
         # Get bot username from environment or use default
         bot_username = os.environ.get("TELEGRAM_BOT_USERNAME", "OpenManus_Assistant_Bot")
         
+        # Check if the bot is active
+        bot_active = bool(ACTIVE_BOT_TOKEN)
+        
+        # Check if the bot matches environment
+        environment_token_match = (
+            (ENVIRONMENT == 'production' and ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION) or
+            (ENVIRONMENT == 'development' and ACTIVE_BOT_TOKEN == BOT_TOKEN_DEVELOPMENT)
+        )
+        
+        # Status for webhooks
+        webhook_set = False
+        if replit_domain and bot_active:
+            webhook_url = f"https://{replit_domain}/telegram_webhook"
+            webhook_set = True  # Assume it's set since we auto-setup on init
+        
+        # Check if there have been recent Telegram interactions
+        telegram_connected = False
+        has_telegram_users = User.query.filter(User.telegram_id.isnot(None)).count() > 0
+        
+        # Check debugging status
+        debug_mode = app.debug
+        
+        # OpenManus status
+        manus_active = True  # Assume it's active
+        manus_api_key = bool(os.environ.get("OPENAI_API_KEY"))
+        memory_system_initialized = True
+        manus_impl = f"OpenAI {MANUS_MODEL}"
+        
         # Set a flag to indicate this is a direct access (bypass login check)
         is_direct_access = True
         
@@ -598,6 +673,20 @@ def dashboard_direct():
             telegram_users=telegram_users,
             registration_token=registration_token,
             bot_username=bot_username,
+            # Status information
+            bot_active=bot_active,
+            webhook_set=webhook_set,
+            environment_token_match=environment_token_match,
+            telegram_connected=telegram_connected,
+            has_telegram_users=has_telegram_users,
+            debug_mode=debug_mode,
+            manus_active=manus_active,
+            manus_api_key=manus_api_key,
+            memory_system_initialized=memory_system_initialized,
+            manus_impl=manus_impl,
+            manus_model=MANUS_MODEL,
+            available_models=AVAILABLE_MODELS,
+            # Direct access flag
             is_direct_access=is_direct_access,
             current_user=user  # Pass the user directly
         )
@@ -724,7 +813,7 @@ def switch_token():
     else:
         flash(f'Already using the {target_token.upper()} token', 'info')
     
-    return redirect(url_for('status'))
+    return redirect(url_for('dashboard'))
 
 @app.route('/switch_environment', methods=['POST'])
 @login_required
@@ -733,7 +822,7 @@ def switch_environment():
     # This route should only be used in development
     if config.IS_DEPLOYED:
         flash('Environment switching is disabled in production environment', 'danger')
-        return redirect(url_for('status'))
+        return redirect(url_for('dashboard'))
     
     # Get the target environment
     target_env = request.form.get('target_environment', 'development')
@@ -741,7 +830,7 @@ def switch_environment():
     # Validate input
     if target_env not in ['development', 'production']:
         flash('Invalid environment specified', 'danger')
-        return redirect(url_for('status'))
+        return redirect(url_for('dashboard'))
     
     # Store old environment for comparison
     old_env = config.ENVIRONMENT
