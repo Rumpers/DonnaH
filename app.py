@@ -362,7 +362,12 @@ def try_login():
         
 @app.route('/status')
 def status():
-    """Display system status and configuration information"""
+    """Redirect to the system status tab on dashboard"""
+    return redirect(url_for('dashboard', _anchor='system-status'))
+    
+@app.route('/status_data')
+def status_data():
+    """Provide system status and configuration information via API"""
     from models import User, MemoryEntry, Document
     from datetime import datetime
     from collections import deque
