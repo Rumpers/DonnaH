@@ -53,10 +53,11 @@ else:
 
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
 
-# Initialize LoginManager
+# Initialize LoginManager - will be replaced by Replit Auth
+# Keep this in place temporarily for compatibility
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.login_view = 'auth'
+login_manager.login_view = 'replit_auth.login'  # Updated to use Replit Auth
 login_manager.login_message = "Please log in to access this page."
 login_manager.login_message_category = "warning"
 login_manager.session_protection = "strong"
@@ -88,7 +89,8 @@ app.register_blueprint(google_auth)
 @login_manager.user_loader
 def load_user(user_id):
     from models import User
-    return User.query.get(int(user_id))
+    # No need to convert to int for Replit Auth since user_id is a string
+    return User.query.get(user_id)
 
 # Routes
 @app.route('/')

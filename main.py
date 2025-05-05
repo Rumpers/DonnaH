@@ -2,6 +2,7 @@ import os
 import logging
 from app import app
 import config
+import routes  # Import routes to register blueprints
 
 # Set up logging - more detailed in development, concise in production
 logging.basicConfig(
