@@ -877,7 +877,7 @@ def switch_environment():
     else:
         flash(f'Already in {target_env.upper()} environment', 'info')
     
-    return redirect(url_for('status'))
+    return redirect(url_for('dashboard', _anchor='system-status'))
 
 @app.route('/inspect_users')
 def inspect_users():
@@ -1004,7 +1004,7 @@ def change_model():
     # Check if the model is valid
     if model not in config.AVAILABLE_MODELS:
         flash('Invalid model selected', 'danger')
-        return redirect(url_for('status'))
+        return redirect(url_for('dashboard', _anchor='system-status'))
     
     # Update the model in the configuration
     old_model = config.MANUS_MODEL
@@ -1023,7 +1023,7 @@ def change_model():
         logger.error(f"Error re-initializing OpenManus: {str(e)}")
         flash(f'Error switching model: {str(e)}', 'danger')
     
-    return redirect(url_for('status'))
+    return redirect(url_for('dashboard', _anchor='system-status'))
 
 @app.route('/telegram_webhook', methods=['POST'])
 def telegram_webhook():
