@@ -177,6 +177,80 @@ def chat():
     """Web interface for chatting with OpenManus"""
     return render_template('chat.html')
 
+@app.route('/check_services')
+@require_login
+def check_services():
+    """Check the status of all services and redirect to status page"""
+    try:
+        # Check OpenAI API key
+        openai_key_available = bool(os.environ.get("OPENAI_API_KEY"))
+        if not openai_key_available:
+            flash('OpenAI API key is not configured. OpenManus features will be limited.', 'warning')
+        
+        # Check Telegram token
+        from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT, ENVIRONMENT
+        
+        # Force a refresh of the token from environment
+        from config import set_token_for_environment
+        set_token_for_environment()
+        
+        if not ACTIVE_BOT_TOKEN:
+            if ENVIRONMENT == 'production':
+                flash('Production Telegram bot token is not configured. Telegram bot functionality will not work.', 'warning')
+            else:
+                flash('Development Telegram bot token is not configured. Telegram bot functionality will not work.', 'warning')
+        
+        # Check webhook status
+        import telegram_bot
+        replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
+        if replit_domain:
+            try:
+                # Re-initialize bot to ensure correct config
+                telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN, force_reinit=True)
+                webhook_status = telegram_bot.get_webhook_info()
+                if webhook_status and webhook_status.get('url', ''):
+                    flash(f'Telegram webhook is active at {webhook_status.get("url")}', 'success')
+                else:
+                    webhook_url = f"https://{replit_domain}/telegram_webhook"
+                    success = telegram_bot.setup_webhook(webhook_url)
+                    if success:
+                        flash(f'Telegram webhook was not set. Successfully set up at {webhook_url}', 'success')
+                    else:
+                        flash('Telegram webhook is not configured and automatic setup failed.', 'danger')
+            except Exception as e:
+                app.logger.error(f"Error checking webhook: {str(e)}")
+                flash(f'Error checking Telegram webhook: {str(e)}', 'danger')
+        else:
+            flash('Replit domain not available. Cannot verify Telegram webhook status.', 'warning')
+        
+        # Check database
+        try:
+            # Simple database check - count users
+            user_count = User.query.count()
+            flash(f'Database connection successful. Found {user_count} users.', 'success')
+        except Exception as e:
+            app.logger.error(f"Database error: {str(e)}")
+            flash(f'Database error: {str(e)}', 'danger')
+        
+        # Verify environment settings
+        current_env = os.environ.get("MANUS_ENVIRONMENT", ENVIRONMENT)
+        flash(f'Current environment: {current_env.upper()}', 'info')
+        
+        # Check for environment-token mismatch
+        environment_token_match = (
+            (current_env == 'production' and ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION) or
+            (current_env == 'development' and ACTIVE_BOT_TOKEN == BOT_TOKEN_DEVELOPMENT)
+        )
+        if not environment_token_match:
+            flash('Warning: Environment and active token do not match. Consider switching the token.', 'warning')
+            
+    except Exception as e:
+        app.logger.error(f"Error in service check: {str(e)}")
+        flash(f'Error checking services: {str(e)}', 'danger')
+    
+    # Redirect to the status tab
+    return redirect(url_for('dashboard_status'))
+
 @app.route('/process_chat', methods=['POST'])
 @require_login
 def process_chat():
