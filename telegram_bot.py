@@ -379,62 +379,55 @@ async def process_message(update: Update, context: CallbackContext) -> int:
     
     # Check if we're waiting for a user ID for account linking
     if 'awaiting_user_id' in context.user_data and context.user_data['awaiting_user_id']:
-        try:
-            user_id_text = user_message.strip()
-            user_id = int(user_id_text)
+        # Process the user ID input
+        user_id = user_message.strip()
+        
+        # Check if user exists - user_id is a string in the database
+        from models import User
 
-            # Check if user exists
-            from models import User
+        user = User.query.get(user_id)
+        if user:
+            # Link Telegram ID to user
+            user.telegram_id = telegram_id
+            db.session.commit()
 
-            user = User.query.get(user_id)
-            if user:
-                # Link Telegram ID to user
-                user.telegram_id = telegram_id
-                db.session.commit()
+            # Clear the awaiting flag
+            context.user_data.pop('awaiting_user_id', None)
 
-                # Clear the awaiting flag
-                context.user_data.pop('awaiting_user_id', None)
+            # Create a new conversation
+            conversation = Conversation(user_id=user.id)
+            db.session.add(conversation)
+            db.session.commit()
 
-                # Create a new conversation
-                conversation = Conversation(user_id=user.id)
-                db.session.add(conversation)
-                db.session.commit()
+            # Store conversation ID in user context
+            context.user_data['conversation_id'] = conversation.id
 
-                # Store conversation ID in user context
-                context.user_data['conversation_id'] = conversation.id
+            keyboard = [
+                ['📧 Email', '📅 Calendar'],
+                ['🧠 Memory', '❓ Help']
+            ]
 
-                keyboard = [
-                    ['📧 Email', '📅 Calendar'],
-                    ['🧠 Memory', '❓ Help']
-                ]
+            reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
 
-                reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
-
-                await update.message.reply_text(
-                    f"Account linked successfully! Welcome, {user.username}!\n\n"
-                    "You can now use your assistant through Telegram. How can I help you today?",
-                    reply_markup=reply_markup
-                )
-
-                # Save this message to the database
-                message = Message(
-                    conversation_id=conversation.id,
-                    content=f"Account linked successfully! Welcome, {user.username}! How can I help you today?",
-                    is_user=False
-                )
-                db.session.add(message)
-                db.session.commit()
-
-                return MAIN_MENU
-            else:
-                await update.message.reply_text(
-                    "User ID not found. Please check the ID and try again, or register through the web interface."
-                )
-                return MAIN_MENU
-
-        except ValueError:
             await update.message.reply_text(
-                "Invalid user ID format. Please enter a numeric ID."
+                f"Account linked successfully! Welcome, {user.username}!\n\n"
+                "You can now use your assistant through Telegram. How can I help you today?",
+                reply_markup=reply_markup
+            )
+
+            # Save this message to the database
+            message = Message(
+                conversation_id=conversation.id,
+                content=f"Account linked successfully! Welcome, {user.username}! How can I help you today?",
+                is_user=False
+            )
+            db.session.add(message)
+            db.session.commit()
+
+            return MAIN_MENU
+        else:
+            await update.message.reply_text(
+                "User ID not found. Please check the ID and try again, or register through the web interface."
             )
             return MAIN_MENU
 
@@ -956,26 +949,22 @@ def process_update(update_data):
 
             if not db_user:
                 # No linked account yet, this might be a user ID
-                try:
-                    input_user_id = int(text.strip())
+                input_user_id = text.strip()
 
-                    # Look up the user by ID
-                    user = User.query.get(input_user_id)
-                    if user:
-                        # Link Telegram ID to user
-                        user.telegram_id = telegram_id
-                        from app import db
-                        db.session.commit()
+                # Look up the user by ID - user_id is a string in the database 
+                user = User.query.get(input_user_id)
+                if user:
+                    # Link Telegram ID to user
+                    user.telegram_id = telegram_id
+                    from app import db
+                    db.session.commit()
 
-                        # Send account linked message using our utility function
-                        linked_msg = f"Account linked successfully! Welcome, {user.username}!\n\nYou can now use your assistant through Telegram. How can I help you today?"
-                        success = send_telegram_message(chat_id, linked_msg)
-                        if not success:
-                            logger.error("Failed to send account linked message")
-                        return True
-                except ValueError:
-                    # Not a user ID, just a regular message
-                    pass
+                    # Send account linked message using our utility function
+                    linked_msg = f"Account linked successfully! Welcome, {user.username}!\n\nYou can now use your assistant through Telegram. How can I help you today?"
+                    success = send_telegram_message(chat_id, linked_msg)
+                    if not success:
+                        logger.error("Failed to send account linked message")
+                    return True
 
             # Regular message processing with OpenManus
             if db_user:

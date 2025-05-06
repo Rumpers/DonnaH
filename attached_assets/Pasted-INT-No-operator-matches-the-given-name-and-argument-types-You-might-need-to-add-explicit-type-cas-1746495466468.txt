@@ -1,0 +1,58 @@
+INT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+[SQL: SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.first_name AS users_first_name, users.last_name AS users_last_name, users.bio AS users_bio, users.profile_image_url AS users_profile_image_url, users.telegram_id AS users_telegram_id, users.google_credentials AS users_google_credentials, users.is_admin AS users_is_admin, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(pk_1)s]
+[parameters: {'pk_1': 2}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+DEBUG:app:Session setup complete
+DEBUG:app:Received update from Telegram: {'update_id': 740847719, 'message': {'message_id': 622, 'from': {'id': 460622509, 'is_bot': False, 'first_name': 'J', 'last_name': 'H', 'username': 'huangway', 'language_code': 'en'}, 'chat': {'id': 460622509, 'first_name': 'J', 'last_name': 'H', 'username': 'huangway', 'type': 'private'}, 'date': 1746495383, 'text': '2'}}
+INFO:telegram_bot:Received message from user 460622509 in chat 460622509: 2
+ERROR:telegram_bot:Error processing update: (psycopg2.errors.UndefinedFunction) operator does not exist: character varying = integer
+LINE 3: WHERE users.id = 2
+                       ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+[SQL: SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.first_name AS users_first_name, users.last_name AS users_last_name, users.bio AS users_bio, users.profile_image_url AS users_profile_image_url, users.telegram_id AS users_telegram_id, users.google_credentials AS users_google_credentials, users.is_admin AS users_is_admin, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(pk_1)s]
+[parameters: {'pk_1': 2}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+DEBUG:app:Session setup complete
+INFO:config:Setting active token to PRODUCTION: 80568...
+DEBUG:app:Session setup complete
+DEBUG:app:Session setup complete
+DEBUG:app:Session setup complete
+INFO:config:Setting active token to PRODUCTION: 80568...
+DEBUG:app:Session setup complete
+DEBUG:app:Session setup complete
+DEBUG:app:Session setup complete
+INFO:config:Setting active token to PRODUCTION: 80568...
+DEBUG:app:Session setup complete
+DEBUG:app:Session setup complete
+DEBUG:app:Session setup complete
+DEBUG:app:Received update from Telegram: {'update_id': 740847719, 'message': {'message_id': 622, 'from': {'id': 460622509, 'is_bot': False, 'first_name': 'J', 'last_name': 'H', 'username': 'huangway', 'language_code': 'en'}, 'chat': {'id': 460622509, 'first_name': 'J', 'last_name': 'H', 'username': 'huangway', 'type': 'private'}, 'date': 1746495383, 'text': '2'}}
+INFO:telegram_bot:Received message from user 460622509 in chat 460622509: 2
+ERROR:telegram_bot:Error processing update: (psycopg2.errors.UndefinedFunction) operator does not exist: character varying = integer
+LINE 3: WHERE users.id = 2
+                       ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+[SQL: SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.first_name AS users_first_name, users.last_name AS users_last_name, users.bio AS users_bio, users.profile_image_url AS users_profile_image_url, users.telegram_id AS users_telegram_id, users.google_credentials AS users_google_credentials, users.is_admin AS users_is_admin, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(pk_1)s]
+[parameters: {'pk_1': 2}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
+DEBUG:app:Session setup complete
+DEBUG:app:Received update from Telegram: {'update_id': 740847719, 'message': {'message_id': 622, 'from': {'id': 460622509, 'is_bot': False, 'first_name': 'J', 'last_name': 'H', 'username': 'huangway', 'language_code': 'en'}, 'chat': {'id': 460622509, 'first_name': 'J', 'last_name': 'H', 'username': 'huangway', 'type': 'private'}, 'date': 1746495383, 'text': '2'}}
+INFO:telegram_bot:Received message from user 460622509 in chat 460622509: 2
+ERROR:telegram_bot:Error processing update: (psycopg2.errors.UndefinedFunction) operator does not exist: character varying = integer
+LINE 3: WHERE users.id = 2
+                       ^
+HINT:  No operator matches the given name and argument types. You might need to add explicit type casts.
+
+[SQL: SELECT users.id AS users_id, users.username AS users_username, users.email AS users_email, users.password_hash AS users_password_hash, users.first_name AS users_first_name, users.last_name AS users_last_name, users.bio AS users_bio, users.profile_image_url AS users_profile_image_url, users.telegram_id AS users_telegram_id, users.google_credentials AS users_google_credentials, users.is_admin AS users_is_admin, users.created_at AS users_created_at, users.updated_at AS users_updated_at 
+FROM users 
+WHERE users.id = %(pk_1)s]
+[parameters: {'pk_1': 2}]
+(Background on this error at: https://sqlalche.me/e/20/f405)
