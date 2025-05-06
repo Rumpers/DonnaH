@@ -1000,6 +1000,36 @@ def process_update(update_data):
         logger.error(f"Error processing update: {e}")
         return False
 
+def get_webhook_info():
+    """
+    Get webhook information for the Telegram bot.
+    
+    Returns:
+        dict: Webhook information if successful, None otherwise
+    """
+    if bot_application is None:
+        logger.error("Bot application not initialized")
+        return None
+    
+    try:
+        # Get the bot instance
+        bot = bot_application.bot
+        
+        # Use simple requests method to get webhook info
+        from config import ACTIVE_BOT_TOKEN
+        response = requests.get(f"https://api.telegram.org/bot{ACTIVE_BOT_TOKEN}/getWebhookInfo")
+        
+        if response.status_code == 200:
+            webhook_data = response.json()
+            if webhook_data.get('ok'):
+                return webhook_data.get('result', {})
+        
+        logger.error(f"Failed to get webhook info: {response.text}")
+        return None
+    except Exception as e:
+        logger.error(f"Error getting webhook info: {e}")
+        return None
+
 def setup_webhook(url):
     """
     Set up a webhook for the Telegram bot.
