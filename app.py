@@ -620,7 +620,7 @@ def switch_token():
     else:
         flash(f'Already using the {target_token.upper()} token', 'info')
     
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard_telegram'))
 
 @app.route('/switch_environment', methods=['POST'])
 @login_required
