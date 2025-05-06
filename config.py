@@ -14,7 +14,12 @@ BOT_TOKEN_DEVELOPMENT = os.environ.get("TELEGRAM_BOT_TOKEN_NOENA")  # Developmen
 IS_DEPLOYED = not os.environ.get("REPLIT_DEV_DOMAIN", "").endswith("janeway.replit.dev")
 
 # Default environment setting - can be overridden via UI
-ENVIRONMENT = "production" if IS_DEPLOYED else "development"
+# In production, always use production environment
+# In development, get from environment variable or default to "development"
+if IS_DEPLOYED:
+    ENVIRONMENT = "production"
+else:
+    ENVIRONMENT = os.environ.get("MANUS_ENVIRONMENT", "development")
 
 # Initialize token based on environment
 def set_token_for_environment():
