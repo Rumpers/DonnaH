@@ -79,7 +79,16 @@ def dashboard_common(active_tab='overview'):
     
     # Determine which token is being used
     # Always check environment variable first to get the most current setting
+    # This ensures we pick up changes made by other worker processes
     current_env = os.environ.get("MANUS_ENVIRONMENT", ENVIRONMENT)
+    
+    # Force a refresh of the token from config to match current environment
+    # This ensures config is always up to date
+    from config import set_token_for_environment
+    set_token_for_environment()
+    
+    # Get fresh token info after the refresh
+    from config import ACTIVE_BOT_TOKEN, BOT_TOKEN_PRODUCTION, BOT_TOKEN_DEVELOPMENT
     
     token_info = {
         'environment': current_env,

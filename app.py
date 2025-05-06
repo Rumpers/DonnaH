@@ -644,11 +644,12 @@ def switch_environment():
     
     # Update the environment setting
     if old_env != target_env:
-        # Update the environment in config
-        config.ENVIRONMENT = target_env
-        
-        # Set environment variable to make it persistent across workers
+        # Update environment variable to make it persistent across workers
+        # This is our single source of truth
         os.environ["MANUS_ENVIRONMENT"] = target_env
+        
+        # Update the environment in config too for consistency
+        config.ENVIRONMENT = target_env
         logger.info(f"Switched to {target_env.upper()} environment")
         
         # Update the token to match the new environment
