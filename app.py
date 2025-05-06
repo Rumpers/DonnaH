@@ -688,8 +688,8 @@ def switch_environment():
     else:
         flash(f'Already in {target_env.upper()} environment', 'info')
     
-    # Return to the system status tab
-    return redirect(url_for('dashboard_status'))
+    # Return to the Telegram bot tab since that's where environment switching is typically accessed from
+    return redirect(url_for('dashboard_telegram'))
 
 @app.route('/inspect_users')
 def inspect_users():
@@ -742,20 +742,20 @@ def setup_telegram_webhook():
         
         if not ACTIVE_BOT_TOKEN:
             flash('Telegram bot token not configured. Cannot set up webhook.', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard_telegram'))
             
         # Log which token and environment are being used
         logger.info(f"Using {'Production' if ENVIRONMENT == 'production' else 'Development'} bot for webhook setup")
             
         if not replit_domain:
             flash('Replit domain not available. Cannot set up webhook.', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard_telegram'))
             
         # Initialize bot with force reinit to ensure correct token is used
         is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN, force_reinit=True)
         if not is_registered:
             flash('Failed to initialize Telegram bot. Check logs for details.', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard_telegram'))
             
         # Set up webhook
         webhook_url = f"https://{replit_domain}/telegram_webhook"
@@ -770,7 +770,7 @@ def setup_telegram_webhook():
         logger.error(f"Error setting up webhook: {str(e)}")
         flash(f'Error setting up webhook: {str(e)}', 'danger')
         
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard_telegram'))
     
 @app.route('/remove_telegram_webhook', methods=['POST'])
 def remove_telegram_webhook():
@@ -781,7 +781,7 @@ def remove_telegram_webhook():
         
         if not ACTIVE_BOT_TOKEN:
             flash('Telegram bot token not configured. Cannot remove webhook.', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard_telegram'))
             
         # Log which token and environment are being used
         logger.info(f"Using {'Production' if ENVIRONMENT == 'production' else 'Development'} bot for webhook removal")
@@ -790,7 +790,7 @@ def remove_telegram_webhook():
         is_registered = telegram_bot.initialize_bot(ACTIVE_BOT_TOKEN, force_reinit=True)
         if not is_registered:
             flash('Failed to initialize Telegram bot. Check logs for details.', 'danger')
-            return redirect(url_for('dashboard'))
+            return redirect(url_for('dashboard_telegram'))
             
         # Remove webhook
         success = telegram_bot.remove_webhook()
@@ -804,7 +804,7 @@ def remove_telegram_webhook():
         logger.error(f"Error removing webhook: {str(e)}")
         flash(f'Error removing webhook: {str(e)}', 'danger')
         
-    return redirect(url_for('dashboard'))
+    return redirect(url_for('dashboard_telegram'))
     
 @app.route('/change_model', methods=['POST'])
 @login_required
