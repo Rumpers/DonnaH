@@ -629,7 +629,7 @@ def switch_environment():
     # This route should only be used in development
     if config.IS_DEPLOYED:
         flash('Environment switching is disabled in production environment', 'danger')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard_status'))
     
     # Get the target environment
     target_env = request.form.get('target_environment', 'development')
@@ -637,13 +637,14 @@ def switch_environment():
     # Validate input
     if target_env not in ['development', 'production']:
         flash('Invalid environment specified', 'danger')
-        return redirect(url_for('dashboard'))
+        return redirect(url_for('dashboard_status'))
     
     # Store old environment for comparison
     old_env = config.ENVIRONMENT
     
     # Update the environment setting
     if old_env != target_env:
+        # Update the environment in config
         config.ENVIRONMENT = target_env
         logger.info(f"Switched to {target_env.upper()} environment")
         
@@ -684,7 +685,8 @@ def switch_environment():
     else:
         flash(f'Already in {target_env.upper()} environment', 'info')
     
-    return redirect(url_for('dashboard', _anchor='system-status'))
+    # Return to the system status tab
+    return redirect(url_for('dashboard_status'))
 
 @app.route('/inspect_users')
 def inspect_users():
