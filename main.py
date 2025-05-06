@@ -2,6 +2,10 @@ import os
 import logging
 import config
 
+# Ensure environment variable is set at startup
+if not os.environ.get("MANUS_ENVIRONMENT"):
+    os.environ["MANUS_ENVIRONMENT"] = config.ENVIRONMENT
+
 # Configure logging first
 logging.basicConfig(
     level=logging.INFO if config.IS_DEPLOYED else logging.DEBUG,

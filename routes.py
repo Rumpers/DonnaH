@@ -78,8 +78,11 @@ def dashboard_common(active_tab='overview'):
     replit_domain = os.environ.get("REPLIT_DEV_DOMAIN", "")
     
     # Determine which token is being used
+    # Always check environment variable first to get the most current setting
+    current_env = os.environ.get("MANUS_ENVIRONMENT", ENVIRONMENT)
+    
     token_info = {
-        'environment': ENVIRONMENT,
+        'environment': current_env,
         'is_deployed': IS_DEPLOYED,
         'using_production_token': ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION,
         'has_production_token': bool(BOT_TOKEN_PRODUCTION),
@@ -92,8 +95,8 @@ def dashboard_common(active_tab='overview'):
     # Generate a registration token (simple implementation)
     registration_token = "donnah_bot"  # In a real app, generate this securely
     
-    # Bot username
-    if ENVIRONMENT == 'production':
+    # Bot username - use current environment from environment variable
+    if current_env == 'production':
         bot_username = os.environ.get("BOT_USERNAME_PRODUCTION", "YourBotUsernameProduction")
     else:
         bot_username = os.environ.get("BOT_USERNAME_DEVELOPMENT", "YourBotUsernameDev")
@@ -109,8 +112,8 @@ def dashboard_common(active_tab='overview'):
     
     # Check if the bot matches environment
     environment_token_match = (
-        (ENVIRONMENT == 'production' and ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION) or
-        (ENVIRONMENT == 'development' and ACTIVE_BOT_TOKEN == BOT_TOKEN_DEVELOPMENT)
+        (current_env == 'production' and ACTIVE_BOT_TOKEN == BOT_TOKEN_PRODUCTION) or
+        (current_env == 'development' and ACTIVE_BOT_TOKEN == BOT_TOKEN_DEVELOPMENT)
     )
     
     # Status for webhooks
