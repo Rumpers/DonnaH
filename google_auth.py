@@ -9,9 +9,9 @@ from oauthlib.oauth2 import WebApplicationClient
 from app import db
 from models import User
 
-# Google OAuth configuration
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET")
+# Business Card Scanner Web OAuth configuration
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_OAUTH_CLIENT_ID", "Biz_Card_Scanner_Web_Client_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_OAUTH_CLIENT_SECRET", "Biz_Card_Scanner_Web_Client_Secret")
 GOOGLE_DISCOVERY_URL = "https://accounts.google.com/.well-known/openid-configuration"
 
 # For the Google OAuth redirect URI

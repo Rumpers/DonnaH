@@ -45,9 +45,9 @@ ACTIVE_BOT_TOKEN = set_token_for_environment()
 # Log deployment status
 logger.info(f"Deployment status: {'DEPLOYED' if IS_DEPLOYED else 'DEVELOPMENT'}")
 
-# Google API configuration
-GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
-GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+# Google API configuration - Business Card Scanner Web
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID", "Biz_Card_Scanner_Web_Client_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET", "Biz_Card_Scanner_Web_Client_Secret")
 
 # OpenManus configuration
 MANUS_API_KEY = os.environ.get("OPENAI_API_KEY")  # Using OpenAI API key directly
